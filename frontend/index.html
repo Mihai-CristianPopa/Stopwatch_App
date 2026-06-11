@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stopwatch Tracker</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- Top bar — only visible when authenticated -->
+  <header id="app-header" hidden>
+    <nav>
+      <button id="nav-stopwatch" class="nav-btn active">Stopwatch</button>
+      <button id="nav-history" class="nav-btn">Last 7 Days</button>
+    </nav>
+    <div class="header-user">
+      <span id="user-email"></span>
+      <button id="logout-btn" class="btn-secondary">Logout</button>
+    </div>
+  </header>
+
+  <!-- Auth view -->
+  <main id="auth-view">
+    <div class="card auth-card">
+      <h1>Stopwatch Tracker</h1>
+
+      <!-- Login form -->
+      <form id="login-form">
+        <h2>Log in</h2>
+        <label>Email
+          <input type="email" id="login-email" required autocomplete="email" />
+        </label>
+        <label>Password
+          <input type="password" id="login-password" required autocomplete="current-password" />
+        </label>
+        <button type="submit">Log in</button>
+        <p class="form-switch">No account? <button type="button" id="show-register" class="link-btn">Register</button></p>
+      </form>
+
+      <!-- Register form -->
+      <form id="register-form" hidden>
+        <h2>Create account</h2>
+        <label>Email
+          <input type="email" id="register-email" required autocomplete="email" />
+        </label>
+        <label>Password
+          <input type="password" id="register-password" required autocomplete="new-password" />
+        </label>
+        <label>Confirm password
+          <input type="password" id="register-confirm" required autocomplete="new-password" />
+        </label>
+        <button type="submit">Create account</button>
+        <p class="form-switch">Already have an account? <button type="button" id="show-login" class="link-btn">Log in</button></p>
+      </form>
+
+      <p id="auth-error" class="error-msg" hidden></p>
+    </div>
+  </main>
+
+  <!-- Stopwatch view -->
+  <main id="stopwatch-view" hidden>
+    <div class="card stopwatch-card">
+      <div id="stopwatch-display" class="display">00:00:00</div>
+      <div class="stopwatch-controls">
+        <button id="start-btn" class="btn-primary btn-large">Start</button>
+        <button id="stop-btn" class="btn-stop btn-large" hidden>Stop</button>
+      </div>
+    </div>
+    <div id="stopwatch-toast" class="toast"></div>
+  </main>
+
+  <!-- Daily totals view -->
+  <main id="daily-totals-view" hidden>
+    <div class="card">
+      <h2>Last 7 Days</h2>
+      <ul id="daily-totals-list" class="totals-list"></ul>
+    </div>
+  </main>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
