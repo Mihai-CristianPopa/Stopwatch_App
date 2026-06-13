@@ -1,4 +1,4 @@
-const BACKEND_ORIGIN = 'http://127.0.0.1:7000';
+const BACKEND_ORIGIN = 'http://localhost:7000';
 
 function formatDayLabel(dateStr) {
   const todayStr = new Date().toISOString().slice(0, 10);

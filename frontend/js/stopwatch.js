@@ -1,4 +1,4 @@
-const BACKEND_ORIGIN = 'http://127.0.0.1:7000';
+const BACKEND_ORIGIN = 'http://localhost:7000';
 const STORAGE_KEY = 'stopwatch:active';
 const TICK_INTERVAL_MS = 250;
 
@@ -102,23 +102,23 @@ export function initStopwatch() {
     enterIdleState();
 
     try {
-      const response = await fetch(`${BACKEND_ORIGIN}/intervals`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          start_time: new Date(startTime).toISOString(),
-          end_time: new Date(endTime).toISOString(),
-          start_tz_offset_min: startTzOffset,
-          end_tz_offset_min: endTzOffset
-        })
-      });
+        const response = await fetch(`${BACKEND_ORIGIN}/intervals`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+                start_time: new Date(startTime).toISOString(),
+                end_time: new Date(endTime).toISOString(),
+                start_tz_offset_min: startTzOffset,
+                end_tz_offset_min: endTzOffset
+            })
+        });
 
-      if (response.ok) {
-        showToast(`Saved ${formatDurationHuman(durationMs)}`);
-      } else {
-        showToast('Could not save session. Please try again.');
-      }
+        if (response.ok) {
+          showToast(`Saved ${formatDurationHuman(durationMs)}`);
+        } else {
+          showToast('Could not save session. Please try again.');
+        }
     } catch {
       showToast('Could not save session. Please try again.');
     }
