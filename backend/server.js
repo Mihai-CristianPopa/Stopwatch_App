@@ -12,7 +12,7 @@ const app = express();
 const port = config.port;
 const frontendOrigin = config.frontendOrigin;
 
-app.use(cors({ origin: true, credentials: true }));
+app.use(cors({ origin: [frontendOrigin, "https://mihai-cristianpopa.github.io"], credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 
@@ -20,7 +20,10 @@ function setupRoutes() {
   app.use("/authentication", authenticationRoutes);
   app.use("/intervals", intervalRoutes);
 
-  app.get("/health", (req, res) => {
+  app.get("/health", async (req, res) => {
+    if (app.locals.dbIsDown) {
+      await connectToDatabase();
+    }
     res.status(200).json({
       status: app.locals.dbIsDown ? "DEGRADED" : "OK",
       database: app.locals.dbIsDown ? "DOWN" : "UP",
