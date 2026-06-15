@@ -1,9 +1,10 @@
+import { setTodayTotalMs, addTodayTotalMs, getTodayTotalMs } from './todayState.js';
+
 const BACKEND_ORIGIN = 'http://localhost:7000';
 const STORAGE_KEY = 'stopwatch:active';
 const TICK_INTERVAL_MS = 250;
 
 let tickTimer = null;
-let todayTotalMs = 0;
 
 function formatDuration(ms) {
   const totalSec = Math.floor(ms / 1000);
@@ -33,7 +34,7 @@ function getTodayTotalEl() { return document.getElementById('today-total'); }
 function getTodayTotalValueEl() { return document.getElementById('today-total-value'); }
 
 function renderTodayTotal() {
-  const totalSec = Math.floor(todayTotalMs / 1000);
+  const totalSec = Math.floor(getTodayTotalMs() / 1000);
   const h = Math.floor(totalSec / 3600);
   const m = Math.floor((totalSec % 3600) / 60);
   const parts = [];
@@ -52,7 +53,7 @@ async function fetchTodayTotal() {
     if (!response.ok) return;
     const data = await response.json();
     const todayRow = data.find(r => r.date === todayStr);
-    todayTotalMs = todayRow ? todayRow.total_ms : 0;
+    setTodayTotalMs(todayRow ? todayRow.total_ms : 0);
     renderTodayTotal();
   } catch {
     // silently ignore — the today total is non-critical
@@ -147,7 +148,7 @@ export function initStopwatch() {
       });
 
       if (response.ok) {
-        todayTotalMs += durationMs;
+        addTodayTotalMs(durationMs);
         renderTodayTotal();
         showToast(`Saved ${formatDurationHuman(durationMs)}`);
       } else {

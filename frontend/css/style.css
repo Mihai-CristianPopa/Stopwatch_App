@@ -223,6 +223,20 @@ button[type=submit]:disabled { opacity: 0.6; cursor: not-allowed; }
 }
 
 /* ── Daily totals ── */
+.totals-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0;
+}
+
+.aggregation-total {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+.aggregation-total[hidden] { display: none; }
+
 .totals-list {
   list-style: none;
   display: flex;
