@@ -113,7 +113,7 @@ async function loadDailyTotals(from, to, label) {
       return;
     }
     const data = await response.json();
-    cache.set(cacheKey, data);
+    cache.set(cacheKey, data.reverse());
     render(data, label, to);
   } catch {
     listEl.innerHTML = '<li class="error">Could not load history.</li>';
