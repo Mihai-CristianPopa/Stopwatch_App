@@ -1,4 +1,33 @@
 /**
+ * Returns the YYYY-MM-DD of the Monday of the week containing dateStr.
+ */
+export function mondayOf(dateStr) {
+  const [yyyy, mm, dd] = dateStr.split('-').map(Number);
+  const d = new Date(Date.UTC(yyyy, mm - 1, dd));
+  const day = d.getUTCDay(); // 0=Sun, 1=Mon, ...
+  const daysToMonday = day === 0 ? -6 : 1 - day;
+  const mondayMs = d.getTime() + daysToMonday * 24 * 60 * 60 * 1000;
+  const m = new Date(mondayMs);
+  return `${m.getUTCFullYear()}-${String(m.getUTCMonth() + 1).padStart(2, '0')}-${String(m.getUTCDate()).padStart(2, '0')}`;
+}
+
+/**
+ * Adds n months to a YYYY-MM-DD string, returning YYYY-MM-DD at day 01.
+ */
+export function addMonths(dateStr, n) {
+  const [yyyy, mm] = dateStr.split('-').map(Number);
+  const d = new Date(Date.UTC(yyyy, mm - 1 + n, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-01`;
+}
+
+/**
+ * Adds n years to a YYYY string, returning a YYYY string.
+ */
+export function addYears(yearStr, n) {
+  return String(Number(yearStr) + n);
+}
+
+/**
  * Converts a UTC ISO string to a YYYY-MM-DD local date string using the given TZ offset.
  * tzOffsetMin: value from Date.getTimezoneOffset() — negative east of UTC (e.g. UTC+2 → -120).
  */

@@ -30,6 +30,51 @@ export async function totalsByDay(userId, { from, to }) {
   return result.map(r => ({ date: r._id, total_ms: r.total_ms }));
 }
 
+export async function totalsByBucket(userId, { from, to, granularity }) {
+  const uid = userId instanceof ObjectId ? userId : new ObjectId(userId);
+
+  let groupId;
+  if (granularity === 'month') {
+    groupId = { $substrCP: ["$date", 0, 7] };
+  } else if (granularity === 'year') {
+    groupId = { $substrCP: ["$date", 0, 4] };
+  } else if (granularity === 'week') {
+    groupId = {
+      $dateToString: {
+        format: "%Y-%m-%d",
+        date: {
+          $dateTrunc: {
+            date: { $dateFromString: { dateString: "$start_time" } },
+            unit: "week",
+            startOfWeek: "monday"
+          }
+        }
+      }
+    };
+  } else {
+    // day
+    groupId = "$date";
+  }
+
+  const result = await collection().aggregate([
+    {
+      $match: {
+        user_id: uid,
+        date: { $gte: from, $lte: to }
+      }
+    },
+    {
+      $group: {
+        _id: groupId,
+        total_ms: { $sum: "$duration_ms" }
+      }
+    },
+    { $sort: { _id: 1 } }
+  ]).toArray();
+
+  return result.map(r => ({ bucket_key: r._id, total_ms: r.total_ms }));
+}
+
 export async function ensureIndexes() {
   const col = collection();
   await col.createIndex({ user_id: 1, date: 1 }, { background: true });
