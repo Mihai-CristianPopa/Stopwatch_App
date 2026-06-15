@@ -12,7 +12,7 @@ const app = express();
 const port = config.port;
 const frontendOrigin = config.frontendOrigin;
 
-app.use(cors({ origin: [frontendOrigin, "https://mihai-cristianpopa.github.io"], credentials: true }));
+app.use(cors({ origin: [frontendOrigin, "http://localhost:5500", "http://127.0.0.1:5500", "https://mihai-cristianpopa.github.io"], credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 
