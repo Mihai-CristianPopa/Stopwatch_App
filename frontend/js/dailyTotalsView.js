@@ -46,6 +46,8 @@ function computeRange(preset) {
   if (preset === '7d') return { from: offsetDate(today, -6), to: today, label: 'Last 7 Days' };
   if (preset === '30d') return { from: offsetDate(today, -29), to: today, label: 'Last 30 Days' };
   if (preset === 'month') return { from: today.slice(0, 7) + '-01', to: today, label: 'This Month' };
+  if (preset === 'ytd') return { from: today.slice(0, 4) + '-01-01', to: today, label: 'Year to Date' };
+  if (preset === '365d') return { from: offsetDate(today, -364), to: today, label: 'Last 365 Days' };
   return null;
 }
 
