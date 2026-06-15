@@ -3,6 +3,7 @@ const STORAGE_KEY = 'stopwatch:active';
 const TICK_INTERVAL_MS = 250;
 
 let tickTimer = null;
+let todayTotalMs = 0;
 
 function formatDuration(ms) {
   const totalSec = Math.floor(ms / 1000);
@@ -28,6 +29,35 @@ function getDisplayEl() { return document.getElementById('stopwatch-display'); }
 function getStartBtn() { return document.getElementById('start-btn'); }
 function getStopBtn() { return document.getElementById('stop-btn'); }
 function getToastEl() { return document.getElementById('stopwatch-toast'); }
+function getTodayTotalEl() { return document.getElementById('today-total'); }
+function getTodayTotalValueEl() { return document.getElementById('today-total-value'); }
+
+function renderTodayTotal() {
+  const totalSec = Math.floor(todayTotalMs / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const parts = [];
+  if (h > 0) parts.push(`${h}h`);
+  parts.push(`${m}m`);
+  getTodayTotalValueEl().textContent = parts.join(' ');
+  getTodayTotalEl().hidden = false;
+}
+
+async function fetchTodayTotal() {
+  try {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const response = await fetch(`${BACKEND_ORIGIN}/intervals/daily-totals`, {
+      credentials: 'include'
+    });
+    if (!response.ok) return;
+    const data = await response.json();
+    const todayRow = data.find(r => r.date === todayStr);
+    todayTotalMs = todayRow ? todayRow.total_ms : 0;
+    renderTodayTotal();
+  } catch {
+    // silently ignore — the today total is non-critical
+  }
+}
 
 function tick(startTime) {
   const elapsed = Date.now() - startTime;
@@ -60,6 +90,8 @@ function showToast(message) {
 export function initStopwatch() {
   const startBtn = getStartBtn();
   const stopBtn = getStopBtn();
+
+  fetchTodayTotal();
 
   // Resume if a run was active before the page was refreshed
   const stored = localStorage.getItem(STORAGE_KEY);
@@ -102,23 +134,25 @@ export function initStopwatch() {
     enterIdleState();
 
     try {
-        const response = await fetch(`${BACKEND_ORIGIN}/intervals`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({
-                start_time: new Date(startTime).toISOString(),
-                end_time: new Date(endTime).toISOString(),
-                start_tz_offset_min: startTzOffset,
-                end_tz_offset_min: endTzOffset
-            })
-        });
+      const response = await fetch(`${BACKEND_ORIGIN}/intervals`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          start_time: new Date(startTime).toISOString(),
+          end_time: new Date(endTime).toISOString(),
+          start_tz_offset_min: startTzOffset,
+          end_tz_offset_min: endTzOffset
+        })
+      });
 
-        if (response.ok) {
-          showToast(`Saved ${formatDurationHuman(durationMs)}`);
-        } else {
-          showToast('Could not save session. Please try again.');
-        }
+      if (response.ok) {
+        todayTotalMs += durationMs;
+        renderTodayTotal();
+        showToast(`Saved ${formatDurationHuman(durationMs)}`);
+      } else {
+        showToast('Could not save session. Please try again.');
+      }
     } catch {
       showToast('Could not save session. Please try again.');
     }

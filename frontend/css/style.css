@@ -163,6 +163,27 @@ button[type=submit]:disabled { opacity: 0.6; cursor: not-allowed; }
   margin: 1rem 0 1.5rem;
 }
 
+.today-total {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
+}
+.today-total[hidden] { display: none; }
+
+.today-total-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.today-total-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
 .stopwatch-controls { display: flex; justify-content: center; gap: 1rem; }
 
 .btn-large {
