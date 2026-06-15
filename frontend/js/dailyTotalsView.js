@@ -5,9 +5,9 @@ const BACKEND_ORIGIN = 'http://localhost:7000';
 // cache value shape: { rows, todayServerMsAtFetch }
 const cache = new Map();
 
-// Tracks the currently-visible range so external callers (e.g. nav clicks)
-// can request a re-render to pick up a fresh today-delta without refetching.
-let activeRange = null; // { from, to, label }
+// Drill stack: array of { from, to, label }. Bottom frame = preset/custom root.
+// Currently rendered level is always drillStack[drillStack.length - 1].
+let drillStack = [];
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
@@ -35,7 +35,7 @@ function daysBetween(from, to) {
 
 function pickGranularity(from, to) {
   const span = daysBetween(from, to);
-  if (span <= 14) return 'day';
+  if (span <= 31) return 'day';
   if (span <= 90) return 'week';
   if (span <= 730) return 'month';
   return 'year';
@@ -46,6 +46,25 @@ function computeRange(preset) {
   if (preset === '7d') return { from: offsetDate(today, -6), to: today, label: 'Last 7 Days' };
   if (preset === '30d') return { from: offsetDate(today, -29), to: today, label: 'Last 30 Days' };
   if (preset === 'month') return { from: today.slice(0, 7) + '-01', to: today, label: 'This Month' };
+  return null;
+}
+
+function drillTargetFor(bucketKey, fromGranularity) {
+  const today = todayStr();
+  if (fromGranularity === 'year') {
+    const yearEnd = `${bucketKey}-12-31`;
+    return { from: `${bucketKey}-01-01`, to: yearEnd < today ? yearEnd : today };
+  }
+  if (fromGranularity === 'month') {
+    const [y, m] = bucketKey.split('-').map(Number);
+    const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    const monthEnd = `${bucketKey}-${String(lastDay).padStart(2, '0')}`;
+    return { from: `${bucketKey}-01`, to: monthEnd < today ? monthEnd : today };
+  }
+  if (fromGranularity === 'week') {
+    const weekEnd = offsetDate(bucketKey, 6);
+    return { from: bucketKey, to: weekEnd < today ? weekEnd : today };
+  }
   return null;
 }
 
@@ -65,8 +84,7 @@ function formatBucketLabel(bucketKey, granularity, rangeCrossesYears, from, to) 
 
   if (granularity === 'week') {
     const weekStart = bucketKey > from ? bucketKey : from;
-    const weekEndRaw = offsetDate(bucketKey, 6);
-    const weekEnd = weekEndRaw < to ? weekEndRaw : to;
+    const weekEnd = offsetDate(bucketKey, 6);
     const fmtOpts = { month: 'short', day: 'numeric', timeZone: 'UTC' };
     if (rangeCrossesYears) fmtOpts.year = 'numeric';
     const [sy, sm, sd] = weekStart.split('-').map(Number);
@@ -106,6 +124,41 @@ function formatTotalMs(ms) {
   return parts.join(' ');
 }
 
+function renderBreadcrumb() {
+  const el = document.getElementById('drill-breadcrumb');
+  if (drillStack.length <= 1) {
+    el.hidden = true;
+    el.innerHTML = '';
+    return;
+  }
+
+  el.hidden = false;
+  el.innerHTML = '';
+
+  drillStack.forEach((frame, i) => {
+    if (i > 0) {
+      const sep = document.createElement('span');
+      sep.className = 'crumb-sep';
+      sep.textContent = '›';
+      el.appendChild(sep);
+    }
+
+    const crumb = document.createElement('span');
+    const isCurrent = i === drillStack.length - 1;
+    crumb.className = isCurrent ? 'crumb current' : 'crumb';
+    crumb.textContent = frame.label;
+
+    if (!isCurrent) {
+      crumb.addEventListener('click', () => {
+        drillStack = drillStack.slice(0, i + 1);
+        loadDailyTotals(frame.from, frame.to, frame.label, false);
+      });
+    }
+
+    el.appendChild(crumb);
+  });
+}
+
 function render(rows, label, granularity, from, to, todayServerMsAtFetch) {
   const listEl = document.getElementById('daily-totals-list');
   const aggregationTotalEl = document.getElementById('aggregation-total');
@@ -114,16 +167,19 @@ function render(rows, label, granularity, from, to, todayServerMsAtFetch) {
   headingEl.textContent = label;
   listEl.innerHTML = '';
 
+  renderBreadcrumb();
+
   const rangeCrossesYears = from.slice(0, 4) !== to.slice(0, 4);
   const todayKey = todayBucketKey(granularity);
   const delta = getTodayTotalMs() - todayServerMsAtFetch;
 
-  // Compute effective ms per row (applying today delta) then find max for bar scaling
   const effectiveMsList = rows.map(row => {
     const base = row.bucket_key === todayKey ? row.total_ms + delta : row.total_ms;
     return Math.max(0, base);
   });
   const maxMs = Math.max(1, ...effectiveMsList);
+
+  const isDrillable = granularity !== 'day';
 
   let grandTotalMs = 0;
   rows.forEach((row, i) => {
@@ -131,7 +187,9 @@ function render(rows, label, granularity, from, to, todayServerMsAtFetch) {
     grandTotalMs += ms;
 
     const li = document.createElement('li');
-    li.className = ms > 0 ? 'day-row active' : 'day-row empty';
+    let className = ms > 0 ? 'day-row active' : 'day-row empty';
+    if (isDrillable) className += ' drillable';
+    li.className = className;
 
     if (ms > 0) {
       const bar = document.createElement('div');
@@ -150,6 +208,17 @@ function render(rows, label, granularity, from, to, todayServerMsAtFetch) {
 
     li.appendChild(labelSpan);
     li.appendChild(totalSpan);
+
+    if (isDrillable) {
+      li.addEventListener('click', () => {
+        const target = drillTargetFor(row.bucket_key, granularity);
+        if (!target) return;
+        const drillLabel = formatBucketLabel(row.bucket_key, granularity, rangeCrossesYears, from, to);
+        drillStack.push({ from: target.from, to: target.to, label: drillLabel });
+        loadDailyTotals(target.from, target.to, drillLabel, false);
+      });
+    }
+
     listEl.appendChild(li);
   });
 
@@ -157,8 +226,12 @@ function render(rows, label, granularity, from, to, todayServerMsAtFetch) {
   aggregationTotalEl.hidden = false;
 }
 
-async function loadDailyTotals(from, to, label) {
-  activeRange = { from, to, label };
+// pushToStack=true resets/sets the root frame; false means a drill push already happened
+async function loadDailyTotals(from, to, label, pushToStack = true) {
+  if (pushToStack) {
+    drillStack = [{ from, to, label }];
+  }
+
   const granularity = pickGranularity(from, to);
   const cacheKey = `${from}|${to}|${granularity}`;
   const listEl = document.getElementById('daily-totals-list');
@@ -192,8 +265,9 @@ async function loadDailyTotals(from, to, label) {
 }
 
 export function rerenderActiveRange() {
-  if (!activeRange) return;
-  loadDailyTotals(activeRange.from, activeRange.to, activeRange.label);
+  if (drillStack.length === 0) return;
+  const top = drillStack[drillStack.length - 1];
+  loadDailyTotals(top.from, top.to, top.label, false);
 }
 
 export function initHistoryControls() {
@@ -226,7 +300,11 @@ export function initHistoryControls() {
       }
 
       customRangeEl.hidden = true;
+      customFromEl.value = '';
+      customToEl.value = '';
+      applyBtn.disabled = true;
       const range = computeRange(preset);
+      // pushToStack=true resets drill stack to this root range
       loadDailyTotals(range.from, range.to, range.label);
     });
   });

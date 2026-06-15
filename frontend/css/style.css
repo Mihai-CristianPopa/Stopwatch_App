@@ -354,6 +354,41 @@ button[type=submit]:disabled { opacity: 0.6; cursor: not-allowed; }
 }
 .day-row.empty .day-total { color: var(--text-muted); font-weight: 400; }
 
+.day-row.drillable { cursor: pointer; }
+.day-row.drillable:hover { background: #e0e7ff; }
+.day-row.drillable.active:hover { background: #dbeafe; }
+
+.drill-breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.75rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+.drill-breadcrumb[hidden] { display: none; }
+
+.drill-breadcrumb .crumb {
+  cursor: pointer;
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.drill-breadcrumb .crumb:hover { color: var(--primary-hover); }
+
+.drill-breadcrumb .crumb.current {
+  cursor: default;
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.drill-breadcrumb .crumb-sep {
+  color: var(--text-muted);
+  user-select: none;
+}
+
 .loading, .error {
   text-align: center;
   color: var(--text-muted);
