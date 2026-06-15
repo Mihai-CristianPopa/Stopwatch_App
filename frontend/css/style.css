@@ -237,6 +237,77 @@ button[type=submit]:disabled { opacity: 0.6; cursor: not-allowed; }
 }
 .aggregation-total[hidden] { display: none; }
 
+/* ── Daily totals ── */
+.totals-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0;
+}
+
+.aggregation-total {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+.aggregation-total[hidden] { display: none; }
+
+.range-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.preset-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.preset-btn {
+  background: none;
+  border: 1px solid var(--border);
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.preset-btn:hover { background: var(--bg); color: var(--text); }
+.preset-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+#custom-range {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+#custom-range[hidden] { display: none; }
+
+#custom-from, #custom-to {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.85rem;
+  width: auto;
+}
+
+.custom-range-sep {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+#apply-range-btn {
+  padding: 0.35rem 0.9rem;
+  font-size: 0.85rem;
+}
+#apply-range-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
 .totals-list {
   list-style: none;
   display: flex;

@@ -12,7 +12,7 @@
   <header id="app-header" hidden>
     <nav>
       <button id="nav-stopwatch" class="nav-btn active">Stopwatch</button>
-      <button id="nav-history" class="nav-btn">Last 7 Days</button>
+      <button id="nav-history" class="nav-btn">History</button>
     </nav>
     <div class="header-user">
       <span id="user-email"></span>
@@ -78,8 +78,22 @@
   <main id="daily-totals-view" hidden>
     <div class="card">
       <div class="totals-header">
-        <h2>Last 7 Days</h2>
+        <h2 id="history-heading">Last 7 Days</h2>
         <span id="aggregation-total" class="aggregation-total" hidden></span>
+      </div>
+      <div class="range-controls">
+        <div class="preset-buttons">
+          <button class="preset-btn active" data-preset="7d">Last 7 Days</button>
+          <button class="preset-btn" data-preset="30d">Last 30 Days</button>
+          <button class="preset-btn" data-preset="month">This Month</button>
+          <button class="preset-btn" data-preset="custom">Custom</button>
+        </div>
+        <div id="custom-range" hidden>
+          <input type="date" id="custom-from" />
+          <span class="custom-range-sep">to</span>
+          <input type="date" id="custom-to" />
+          <button id="apply-range-btn" class="btn-primary" disabled>Apply</button>
+        </div>
       </div>
       <ul id="daily-totals-list" class="totals-list"></ul>
     </div>
