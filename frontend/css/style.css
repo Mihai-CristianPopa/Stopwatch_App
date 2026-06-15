@@ -323,15 +323,34 @@ button[type=submit]:disabled { opacity: 0.6; cursor: not-allowed; }
   padding: 0.65rem 0.75rem;
   border-radius: 8px;
   background: var(--bg);
+  position: relative;
+  overflow: hidden;
 }
 .day-row.active { background: #eff6ff; }
 
-.day-label { font-weight: 500; }
+.day-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: rgba(37, 99, 235, 0.12);
+  z-index: 0;
+  transition: width 0.25s ease;
+  border-radius: 8px;
+}
+
+.day-label {
+  font-weight: 500;
+  position: relative;
+  z-index: 1;
+}
 
 .day-total {
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--primary);
+  position: relative;
+  z-index: 1;
 }
 .day-row.empty .day-total { color: var(--text-muted); font-weight: 400; }
 

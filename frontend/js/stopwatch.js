@@ -52,7 +52,7 @@ async function fetchTodayTotal() {
     });
     if (!response.ok) return;
     const data = await response.json();
-    const todayRow = data.find(r => r.date === todayStr);
+    const todayRow = data.find(r => r.bucket_key === todayStr);
     setTodayTotalMs(todayRow ? todayRow.total_ms : 0);
     renderTodayTotal();
   } catch {

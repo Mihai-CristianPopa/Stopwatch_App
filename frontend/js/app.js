@@ -1,7 +1,7 @@
 import authService from './authService.js';
 import AuthUI from './authUI.js';
 import { initStopwatch } from './stopwatch.js';
-import { initHistoryControls } from './dailyTotalsView.js';
+import { initHistoryControls, rerenderActiveRange } from './dailyTotalsView.js';
 
 const views = {
   auth: document.getElementById('auth-view'),
@@ -30,6 +30,7 @@ function showAuth() {
 document.getElementById('nav-stopwatch').addEventListener('click', () => showView('stopwatch'));
 document.getElementById('nav-history').addEventListener('click', () => {
   showView('history');
+  rerenderActiveRange();
 });
 
 // Init auth UI — delegates login/register/logout handling
