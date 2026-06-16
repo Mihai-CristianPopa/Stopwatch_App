@@ -1,5 +1,5 @@
-/**
- * 
+let _origin = '';
+/** 
  * @description
  * We want to check whether a local instance of the backend is ran
  * or a remote backend is available and based on the available option
@@ -7,7 +7,7 @@
  * backend requests
  * @returns a string containing the backend origin that should be used for requests
  */
-export default async function resolveBackendOrigin() {
+export async function resolveBackendOrigin() {
     const localOrigin = "http://localhost:7000";
     const remoteOrigin = "https://stopwatch-tracker.onrender.com";
     const origins = [localOrigin, remoteOrigin];
@@ -28,4 +28,12 @@ export default async function resolveBackendOrigin() {
         }
     }
     return "";
+}
+
+export function setBackendOrigin(origin) {
+    _origin = origin;
+}
+
+export function getBackendOrigin() {
+    return _origin;
 }

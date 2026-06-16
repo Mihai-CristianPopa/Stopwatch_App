@@ -1,6 +1,6 @@
 import { setTodayTotalMs, addTodayTotalMs, getTodayTotalMs } from './todayState.js';
+import { getBackendOrigin } from './checkBackend.js';
 
-const BACKEND_ORIGIN = 'http://localhost:7000';
 const STORAGE_KEY = 'stopwatch:active';
 const TICK_INTERVAL_MS = 250;
 
@@ -47,7 +47,7 @@ function renderTodayTotal() {
 async function fetchTodayTotal() {
   try {
     const todayStr = new Date().toISOString().slice(0, 10);
-    const response = await fetch(`${BACKEND_ORIGIN}/intervals/daily-totals`, {
+    const response = await fetch(`${getBackendOrigin()}/intervals/daily-totals`, {
       credentials: 'include'
     });
     if (!response.ok) return;
@@ -135,7 +135,7 @@ export function initStopwatch() {
     enterIdleState();
 
     try {
-      const response = await fetch(`${BACKEND_ORIGIN}/intervals`, {
+      const response = await fetch(`${getBackendOrigin()}/intervals`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

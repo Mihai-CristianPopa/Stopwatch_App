@@ -1,5 +1,5 @@
 // TODO: make configurable before deploy
-const BACKEND_ORIGIN = 'http://localhost:7000';
+import { getBackendOrigin } from "./checkBackend.js";
 
 class AuthService {
   constructor() {
@@ -8,16 +8,17 @@ class AuthService {
   }
 
   get backendOrigin() {
-    return BACKEND_ORIGIN;
+    return this._backendOrigin;
   }
 
   async initialize() {
+    this._backendOrigin = getBackendOrigin();
     return await this.checkAuthStatus();
   }
 
   async checkAuthStatus() {
     try {
-      const response = await fetch(`${BACKEND_ORIGIN}/authentication/me`, {
+      const response = await fetch(`${this._backendOrigin}/authentication/me`, {
         method: 'GET',
         credentials: 'include'
       });
@@ -42,7 +43,7 @@ class AuthService {
 
   async login(email, password) {
     try {
-      const response = await fetch(`${BACKEND_ORIGIN}/authentication/login`, {
+      const response = await fetch(`${this._backendOrigin}/authentication/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -68,7 +69,7 @@ class AuthService {
 
   async register(email, password) {
     try {
-      const response = await fetch(`${BACKEND_ORIGIN}/authentication/register`, {
+      const response = await fetch(`${this._backendOrigin}/authentication/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -88,7 +89,7 @@ class AuthService {
 
   async logout() {
     try {
-      await fetch(`${BACKEND_ORIGIN}/authentication/logout`, {
+      await fetch(`${this._backendOrigin}/authentication/logout`, {
         method: 'POST',
         credentials: 'include'
       });

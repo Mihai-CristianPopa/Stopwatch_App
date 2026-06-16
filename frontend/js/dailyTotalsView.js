@@ -1,6 +1,5 @@
 import { getTodayTotalMs } from './todayState.js';
-
-const BACKEND_ORIGIN = 'http://localhost:7000';
+import { getBackendOrigin } from './checkBackend.js';
 
 // cache value shape: { rows, todayServerMsAtFetch }
 const cache = new Map();
@@ -250,7 +249,7 @@ async function loadDailyTotals(from, to, label, pushToStack = true) {
 
   try {
     const response = await fetch(
-      `${BACKEND_ORIGIN}/intervals/daily-totals?from=${from}&to=${to}&granularity=${granularity}`,
+      `${getBackendOrigin()}/intervals/daily-totals?from=${from}&to=${to}&granularity=${granularity}`,
       { credentials: 'include' }
     );
     if (!response.ok) {

@@ -2,6 +2,7 @@ import authService from './authService.js';
 import AuthUI from './authUI.js';
 import { initStopwatch } from './stopwatch.js';
 import { initHistoryControls, rerenderActiveRange } from './dailyTotalsView.js';
+import { resolveBackendOrigin, setBackendOrigin } from './checkBackend.js';
 
 const views = {
   auth: document.getElementById('auth-view'),
@@ -41,6 +42,8 @@ new AuthUI({
 
 // Bootstrap
 (async () => {
+  const origin = await resolveBackendOrigin();
+  setBackendOrigin(origin);
   const authenticated = await authService.initialize();
   if (authenticated) {
     showApp(authService.user);
