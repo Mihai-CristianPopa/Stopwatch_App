@@ -43,14 +43,15 @@ export const requireAuthentication = async (req, res, next) => {
       return handleAuthError(ERROR_OBJECTS.SESSION_NOT_FOUND(), sessionId);
     }
 
-    if (isSessionExpired(loginSession.login_time)) {
+    if (!loginSession.last_login_time || isSessionExpired(loginSession.last_login_time)) {
       return handleAuthError(ERROR_OBJECTS.SESSION_EXPIRED(), sessionId, true);
-      }
+    }
+
+    req.sid = sessionId;
 
     req.user = {
       id: loginSession.user_id,
-      email: loginSession.email_address,
-      loginTime: loginSession.login_time
+      email: loginSession.email_address
     }
 
     infoLog(req, startTime, `Valid session for user: ${loginSession.email_address}.`);

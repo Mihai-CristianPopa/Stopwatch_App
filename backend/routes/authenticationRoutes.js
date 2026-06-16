@@ -4,6 +4,7 @@ import { loginController } from "../controllers/loginController.js";
 import { logoutController } from "../controllers/logoutController.js";
 import { requireAuthentication } from "../middleware/authMiddleware.js";
 import { checkDatabaseForAuth } from "../middleware/dbIsUpMiddleware.js";
+import { updateLoginSession } from "../services/sessionService.js";
 
 const router = express.Router();
 
@@ -16,6 +17,7 @@ router.post("/login", loginController);
 router.post("/register", registerController);
 
 router.get("/me", requireAuthentication, (req, res) => {
+  updateLoginSession(req.sid, new Date().toISOString());
   return res.status(200).json({
       message: "User authenticated successfully.",
       user: req.user

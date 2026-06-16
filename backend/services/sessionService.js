@@ -18,3 +18,12 @@ export function getLoginSession(sessionId) {
   const collection = db.collection("sessions");
   return collection.findOne({ _id: new ObjectId(sessionId) });
 }
+
+export function updateLoginSession(sessionId, lastLoginTime) {
+  const db = client.db("stopwatch_auth");
+  const collection = db.collection("sessions");
+  return collection.updateOne(
+    { _id: new ObjectId(sessionId) },
+    { $set: { last_login_time: lastLoginTime } }
+  );
+}

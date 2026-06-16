@@ -45,7 +45,7 @@ export const isSessionExpired = (loginTimeISO) => {
 
 export const createLoginSessionClearingIndex = async () => {
   try {
-    const loginClearingIndex = await createClearingIndex("stopwatch_auth", "sessions", "login_time", sessionExpirationTimeInMiliseconds);
+    const loginClearingIndex = await createClearingIndex("stopwatch_auth", "sessions", "last_login_time", sessionExpirationTimeInMiliseconds);
     return loginClearingIndex;
   } catch(error) {
     logger.error("createLoginSessionClearingIndex failed.", error);
