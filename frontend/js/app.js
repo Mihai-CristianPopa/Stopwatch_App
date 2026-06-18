@@ -5,6 +5,7 @@ import { initHistoryControls, rerenderActiveRange } from './dailyTotalsView.js';
 import { resolveBackendOrigin, setBackendOrigin } from './checkBackend.js';
 
 const views = {
+  loading: document.getElementById('loading-view'),
   auth: document.getElementById('auth-view'),
   stopwatch: document.getElementById('stopwatch-view'),
   history: document.getElementById('daily-totals-view'),
@@ -42,6 +43,7 @@ new AuthUI({
 
 // Bootstrap
 (async () => {
+  showView('loading');
   const origin = await resolveBackendOrigin();
   setBackendOrigin(origin);
   const authenticated = await authService.initialize();

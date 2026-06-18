@@ -1,7 +1,9 @@
 import { setTodayTotalMs, addTodayTotalMs, getTodayTotalMs } from './todayState.js';
 import { getBackendOrigin } from './checkBackend.js';
+import authService from './authService.js';
 
 const STORAGE_KEY = 'stopwatch:active';
+const PENDING_KEY = 'stopwatch:pending';
 const TICK_INTERVAL_MS = 250;
 
 let tickTimer = null;
@@ -88,11 +90,52 @@ function showToast(message) {
   setTimeout(() => toast.classList.remove('visible'), 3500);
 }
 
+function loadPendingQueue() {
+  try {
+    return JSON.parse(localStorage.getItem(PENDING_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function savePendingQueue(queue) {
+  localStorage.setItem(PENDING_KEY, JSON.stringify(queue));
+}
+
+async function postInterval(payload) {
+  const response = await fetch(`${getBackendOrigin()}/intervals`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(payload)
+  });
+  return response.ok;
+}
+
+async function flushPendingQueue() {
+  const queue = loadPendingQueue();
+  if (queue.length === 0) return;
+  const currentUserId = authService.user?.id;
+  if (!currentUserId) return;
+  const remaining = [];
+  for (const item of queue) {
+    if (item.userId !== currentUserId) {
+      remaining.push(item);
+      continue;
+    }
+    const { userId: _, ...payload } = item;
+    const ok = await postInterval(payload);
+    if (!ok) remaining.push(item);
+  }
+  savePendingQueue(remaining);
+}
+
 export function initStopwatch() {
   const startBtn = getStartBtn();
   const stopBtn = getStopBtn();
 
   fetchTodayTotal();
+  flushPendingQueue();
 
   // Resume if a run was active before the page was refreshed
   const stored = localStorage.getItem(STORAGE_KEY);
@@ -134,28 +177,33 @@ export function initStopwatch() {
     localStorage.removeItem(STORAGE_KEY);
     enterIdleState();
 
-    try {
-      const response = await fetch(`${getBackendOrigin()}/intervals`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          start_time: new Date(startTime).toISOString(),
-          end_time: new Date(endTime).toISOString(),
-          start_tz_offset_min: startTzOffset,
-          end_tz_offset_min: endTzOffset
-        })
-      });
+    // Optimistic update — show the new total immediately
+    addTodayTotalMs(durationMs);
+    renderTodayTotal();
 
-      if (response.ok) {
-        addTodayTotalMs(durationMs);
-        renderTodayTotal();
+    const payload = {
+      start_time: new Date(startTime).toISOString(),
+      end_time: new Date(endTime).toISOString(),
+      start_tz_offset_min: startTzOffset,
+      end_tz_offset_min: endTzOffset
+    };
+
+    try {
+      const ok = await postInterval(payload);
+      if (ok) {
         showToast(`Saved ${formatDurationHuman(durationMs)}`);
+        flushPendingQueue();
       } else {
-        showToast('Could not save session. Please try again.');
+        const queue = loadPendingQueue();
+        queue.push({ userId: authService.user?.id, ...payload });
+        savePendingQueue(queue);
+        showToast(`Saved locally — will sync when back online.`);
       }
     } catch {
-      showToast('Could not save session. Please try again.');
+      const queue = loadPendingQueue();
+      queue.push({ userId: authService.user?.id, ...payload });
+      savePendingQueue(queue);
+      showToast(`Saved locally — will sync when back online.`);
     }
   });
 }

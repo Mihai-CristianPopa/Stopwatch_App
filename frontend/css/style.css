@@ -63,6 +63,25 @@ nav { display: flex; gap: 0.5rem; }
   color: var(--text-muted);
 }
 
+/* ── Loading spinner ── */
+.loading-spinner-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+.loading-spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* ── Card ── */
 .card {
   background: var(--surface);

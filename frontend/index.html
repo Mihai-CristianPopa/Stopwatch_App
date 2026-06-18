@@ -20,8 +20,15 @@
     </div>
   </header>
 
+  <!-- Loading view — shown during backend resolve + auth check -->
+  <main id="loading-view">
+    <div class="loading-spinner-wrap">
+      <div class="loading-spinner"></div>
+    </div>
+  </main>
+
   <!-- Auth view -->
-  <main id="auth-view">
+  <main id="auth-view" hidden>
     <div class="card auth-card">
       <h1>Stopwatch Tracker</h1>
 
