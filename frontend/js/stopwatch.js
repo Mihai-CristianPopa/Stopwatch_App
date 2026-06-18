@@ -46,7 +46,7 @@ function renderTodayTotal() {
   getTodayTotalEl().hidden = false;
 }
 
-async function fetchTodayTotal() {
+export async function fetchTodayTotal() {
   try {
     const todayStr = new Date().toISOString().slice(0, 10);
     const response = await fetch(`${getBackendOrigin()}/intervals/daily-totals`, {
@@ -112,7 +112,7 @@ async function postInterval(payload) {
   return response.ok;
 }
 
-async function flushPendingQueue() {
+export async function flushPendingQueue() {
   const queue = loadPendingQueue();
   if (queue.length === 0) return;
   const currentUserId = authService.user?.id;
@@ -133,9 +133,6 @@ async function flushPendingQueue() {
 export function initStopwatch() {
   const startBtn = getStartBtn();
   const stopBtn = getStopBtn();
-
-  fetchTodayTotal();
-  flushPendingQueue();
 
   // Resume if a run was active before the page was refreshed
   const stored = localStorage.getItem(STORAGE_KEY);

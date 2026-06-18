@@ -1,6 +1,6 @@
 import authService from './authService.js';
 import AuthUI from './authUI.js';
-import { initStopwatch } from './stopwatch.js';
+import { initStopwatch, fetchTodayTotal, flushPendingQueue } from './stopwatch.js';
 import { initHistoryControls, rerenderActiveRange } from './dailyTotalsView.js';
 import { resolveBackendOrigin, setBackendOrigin } from './checkBackend.js';
 
@@ -37,7 +37,11 @@ document.getElementById('nav-history').addEventListener('click', () => {
 
 // Init auth UI — delegates login/register/logout handling
 new AuthUI({
-  onAuthenticated: (user) => showApp(user),
+  onAuthenticated: (user) => {
+    showApp(user, true);
+    // After login
+    fetchTodayTotal();
+  },
   onLogout: () => showAuth()
 });
 
@@ -46,14 +50,14 @@ new AuthUI({
   showView('loading');
   const origin = await resolveBackendOrigin();
   setBackendOrigin(origin);
-  const authenticated = await authService.initialize();
+  const [authenticated] = await Promise.all([authService.initialize(), fetchTodayTotal()]);
   if (authenticated) {
     showApp(authService.user);
   } else {
     showAuth();
   }
-
-  // Init stopwatch (sets up event listeners, resumes if localStorage has active run)
+  // Push leftover intervals from earlier
+  flushPendingQueue();
   initStopwatch();
   initHistoryControls();
 })();
