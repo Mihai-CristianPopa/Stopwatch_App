@@ -44,7 +44,7 @@ export const loginController = async (req, res) => {
     }
 
     // Only try reseting the clearing index if the time to maintain the cookies in the db changes
-    if (sessionExpirationTimeInMiliseconds  !== 24 * 60 * 60 * 1000 * 2) await setClearingIndexForSessionCookies();
+    if (sessionExpirationTimeInMiliseconds  !== 24 * 60 * 60 * 1000) await setClearingIndexForSessionCookies();
 
     const login_time = new Date().toISOString();
 
@@ -61,7 +61,11 @@ export const loginController = async (req, res) => {
 
     infoLog(req, startTime, INFO_MESSAGE.USER_LOGGED_IN(email));
     return res.status(200).json({
-      message: INFO_MESSAGE.USER_LOGGED_IN(email)
+      message: INFO_MESSAGE.USER_LOGGED_IN(email),
+      user: {
+        id: existingUser._id,
+        email: existingUser.email_address
+      }
     })
 
   } catch(error) {
