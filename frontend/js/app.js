@@ -2,6 +2,7 @@ import authService from './authService.js';
 import AuthUI from './authUI.js';
 import { initStopwatch, fetchTodayTotal, flushPendingQueue } from './stopwatch.js';
 import { initHistoryControls, rerenderActiveRange } from './dailyTotalsView.js';
+import { initLibrary, showLibrary } from './libraryView.js';
 import { resolveBackendOrigin, setBackendOrigin } from './checkBackend.js';
 
 const views = {
@@ -9,6 +10,7 @@ const views = {
   auth: document.getElementById('auth-view'),
   stopwatch: document.getElementById('stopwatch-view'),
   history: document.getElementById('daily-totals-view'),
+  library: document.getElementById('library-view'),
 };
 
 function showView(name) {
@@ -33,6 +35,10 @@ document.getElementById('nav-stopwatch').addEventListener('click', () => showVie
 document.getElementById('nav-history').addEventListener('click', () => {
   showView('history');
   rerenderActiveRange();
+});
+document.getElementById('nav-library').addEventListener('click', () => {
+  showView('library');
+  showLibrary();
 });
 
 // Init auth UI — delegates login/register/logout handling
@@ -60,4 +66,5 @@ new AuthUI({
   flushPendingQueue();
   initStopwatch();
   initHistoryControls();
+  initLibrary();
 })();
