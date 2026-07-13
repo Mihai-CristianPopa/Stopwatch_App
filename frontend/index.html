@@ -122,7 +122,18 @@
         <button class="library-tab-btn preset-btn" data-tab="read">Read</button>
       </div>
       <ul id="book-list" class="book-list"></ul>
-      <button type="button" id="book-list-more" class="btn-secondary book-list-more" hidden>Show more</button>
+      <div id="book-pagination" class="book-pagination" hidden>
+        <button type="button" id="page-prev-btn" class="reorder-btn" aria-label="Previous page">◀</button>
+        <span id="page-indicator"></span>
+        <button type="button" id="page-next-btn" class="reorder-btn" aria-label="Next page">▶</button>
+        <label class="page-size-label">Per page
+          <select id="page-size-select">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+          </select>
+        </label>
+      </div>
     </div>
   </main>
 

@@ -1,10 +1,10 @@
 import { getBackendOrigin } from './checkBackend.js';
 import {
   getActiveTab, setActiveTab, getBooks, setBooks,
-  getRenderedCount, setRenderedCount,
+  getPage, setPage, getPageSize, setPageSize,
 } from './libraryState.js';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 1; // default; runtime value lives in libraryState._pageSize
 
 // ── API client ────────────────────────────────────────────────────────────────
 
@@ -93,7 +93,11 @@ function inferPrecisionFromStr(dateStr) {
 // ── DOM refs (resolved once on first init) ────────────────────────────────────
 
 let listEl;
-let listMoreBtn;
+let paginationEl;
+let pagePrevBtn;
+let pageNextBtn;
+let pageIndicator;
+let pageSizeSelect;
 let tabBtns;
 let addBookBtn;
 let formDialog;
@@ -155,19 +159,23 @@ function buildCoverEl(imageUrl, large = false) {
 
 function renderList(books, tab) {
   listEl.innerHTML = '';
-  const renderedCount = getRenderedCount();
-  const visible = books.slice(0, renderedCount);
+  const totalPages = Math.max(1, Math.ceil(books.length / getPageSize()));
+  const currentPage = Math.min(getPage(), totalPages);
+  setPage(currentPage);
+  const start = (currentPage - 1) * getPageSize();
+  const visible = books.slice(start, start + getPageSize());
 
   if (books.length === 0) {
     const li = document.createElement('li');
     li.className = 'loading';
     li.textContent = tab === 'wishlist' ? 'No books in your wishlist yet.' : 'No books in your read list yet.';
     listEl.appendChild(li);
-    listMoreBtn.hidden = true;
+    paginationEl.hidden = true;
     return;
   }
 
   visible.forEach((book, idx) => {
+    const absoluteIdx = start + idx;
     const li = document.createElement('li');
     li.className = 'book-row';
 
@@ -179,20 +187,20 @@ function renderList(books, tab) {
     upBtn.className = 'reorder-btn';
     upBtn.textContent = '▲';
     upBtn.title = 'Move up';
-    upBtn.disabled = idx === 0;
+    upBtn.disabled = absoluteIdx === 0;
     upBtn.addEventListener('click', e => {
       e.stopPropagation();
-      moveBook(idx, idx - 1, tab);
+      moveBook(absoluteIdx, absoluteIdx - 1, tab);
     });
 
     const downBtn = document.createElement('button');
     downBtn.className = 'reorder-btn';
     downBtn.textContent = '▼';
     downBtn.title = 'Move down';
-    downBtn.disabled = idx === books.length - 1;
+    downBtn.disabled = absoluteIdx === books.length - 1;
     downBtn.addEventListener('click', e => {
       e.stopPropagation();
-      moveBook(idx, idx + 1, tab);
+      moveBook(absoluteIdx, absoluteIdx + 1, tab);
     });
 
     reorder.appendChild(upBtn);
@@ -268,7 +276,10 @@ function renderList(books, tab) {
     listEl.appendChild(li);
   });
 
-  listMoreBtn.hidden = renderedCount >= books.length;
+  paginationEl.hidden = totalPages <= 1;
+  pageIndicator.textContent = `Page ${currentPage} of ${totalPages}`;
+  pagePrevBtn.disabled = currentPage === 1;
+  pageNextBtn.disabled = currentPage === totalPages;
 }
 
 // ── Reorder ───────────────────────────────────────────────────────────────────
@@ -295,9 +306,9 @@ async function moveBook(fromIdx, toIdx, tab) {
 
 async function loadBooks(tab) {
   setActiveTab(tab);
-  setRenderedCount(PAGE_SIZE);
+  setPage(1);
   listEl.innerHTML = '<li class="loading">Loading…</li>';
-  listMoreBtn.hidden = true;
+  paginationEl.hidden = true;
 
   try {
     const books = await fetchBooks(tab);
@@ -305,7 +316,7 @@ async function loadBooks(tab) {
     renderList(books, tab);
   } catch {
     listEl.innerHTML = '<li class="error">Could not load books.</li>';
-    listMoreBtn.hidden = true;
+    paginationEl.hidden = true;
   }
 }
 
@@ -527,7 +538,12 @@ function setActiveTabBtn(tab) {
 
 export function initLibrary() {
   listEl = document.getElementById('book-list');
-  listMoreBtn = document.getElementById('book-list-more');
+  paginationEl = document.getElementById('book-pagination');
+  pagePrevBtn = document.getElementById('page-prev-btn');
+  pageNextBtn = document.getElementById('page-next-btn');
+  pageIndicator = document.getElementById('page-indicator');
+  pageSizeSelect = document.getElementById('page-size-select');
+  pageSizeSelect.value = String(getPageSize());
   tabBtns = document.querySelectorAll('.library-tab-btn');
   addBookBtn = document.getElementById('add-book-btn');
   formDialog = document.getElementById('book-form-dialog');
@@ -614,9 +630,18 @@ export function initLibrary() {
     }
   });
 
-  // Show more (pagination)
-  listMoreBtn.addEventListener('click', () => {
-    setRenderedCount(getRenderedCount() + PAGE_SIZE);
+  // Pagination
+  pagePrevBtn.addEventListener('click', () => {
+    setPage(getPage() - 1);
+    renderList(getBooks(), getActiveTab());
+  });
+  pageNextBtn.addEventListener('click', () => {
+    setPage(getPage() + 1);
+    renderList(getBooks(), getActiveTab());
+  });
+  pageSizeSelect.addEventListener('change', () => {
+    setPageSize(parseInt(pageSizeSelect.value, 10));
+    setPage(1);
     renderList(getBooks(), getActiveTab());
   });
 
