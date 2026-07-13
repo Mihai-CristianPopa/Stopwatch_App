@@ -14,6 +14,10 @@ export function createBook(doc) {
   return collection().insertOne(doc);
 }
 
+export function createBooks(docs) {
+  return collection().insertMany(docs);
+}
+
 export async function listBooks(userId, status) {
   const uid = coerceId(userId);
   return collection()

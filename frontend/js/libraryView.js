@@ -100,6 +100,17 @@ let pageIndicator;
 let pageSizeSelect;
 let tabBtns;
 let addBookBtn;
+let importBooksBtn;
+let importPanel;
+let importTextarea;
+let importStatusSelect;
+let importExtractBtn;
+let importPreviewList;
+let importActions;
+let importConfirmBtn;
+let importCancelBtn;
+let importError;
+let importExtractedBooks;
 let formDialog;
 let bookForm;
 let bookIdInput;
@@ -528,6 +539,109 @@ function openConfirmMarkRead(book) {
   };
 }
 
+// ── Import panel ──────────────────────────────────────────────────────────────
+
+const EXTRACTOR_URL = 'http://localhost:8000/extract';
+
+function showImportError(msg) {
+  importError.textContent = msg;
+  importError.hidden = false;
+}
+
+function clearImportError() {
+  importError.textContent = '';
+  importError.hidden = true;
+}
+
+function openImportPanel() {
+  importTextarea.value = '';
+  importPreviewList.hidden = true;
+  importPreviewList.innerHTML = '';
+  importActions.hidden = true;
+  importExtractedBooks = [];
+  clearImportError();
+  importPanel.hidden = false;
+  importTextarea.focus();
+}
+
+function closeImportPanel() {
+  importPanel.hidden = true;
+}
+
+async function handleExtract() {
+  const text = importTextarea.value.trim();
+  if (!text) { showImportError('Please paste some text first.'); return; }
+  clearImportError();
+  importExtractBtn.disabled = true;
+  importExtractBtn.textContent = 'Extracting…';
+  importPreviewList.hidden = true;
+  importActions.hidden = true;
+
+  try {
+    const res = await fetch(EXTRACTOR_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Extraction failed');
+    if (!data.books || data.books.length === 0) {
+      showImportError('No books could be extracted from the text.');
+      return;
+    }
+    importExtractedBooks = data.books;
+
+    importPreviewList.innerHTML = '';
+    data.books.forEach(b => {
+      const li = document.createElement('li');
+      li.className = 'import-preview-item';
+      li.innerHTML = `<span class="preview-title">${b.title}</span> — <span class="preview-author">${b.author}</span>`;
+      importPreviewList.appendChild(li);
+    });
+    importPreviewList.hidden = false;
+
+    importConfirmBtn.textContent = `Add ${data.books.length} book${data.books.length === 1 ? '' : 's'}`;
+    importActions.hidden = false;
+  } catch (err) {
+    showImportError(err.message || 'Could not reach the extractor service. Is book_extractor.py running?');
+  } finally {
+    importExtractBtn.disabled = false;
+    importExtractBtn.textContent = 'Extract with AI';
+  }
+}
+
+async function handleImportConfirm() {
+  if (!importExtractedBooks || importExtractedBooks.length === 0) return;
+  clearImportError();
+  importConfirmBtn.disabled = true;
+  importConfirmBtn.textContent = 'Adding…';
+
+  const status = importStatusSelect.value;
+  try {
+    const res = await fetch(`${getBackendOrigin()}/books/batch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ status, books: importExtractedBooks }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to add books');
+
+    closeImportPanel();
+    // Switch to the tab they imported into and reload
+    const tabToLoad = status;
+    document.querySelectorAll('.library-tab-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === tabToLoad);
+    });
+    await loadBooks(tabToLoad);
+  } catch (err) {
+    showImportError(err.message || 'Something went wrong.');
+  } finally {
+    importConfirmBtn.disabled = false;
+    importConfirmBtn.textContent = `Add ${importExtractedBooks.length} book${importExtractedBooks.length === 1 ? '' : 's'}`;
+  }
+}
+
 // ── Tab switching ─────────────────────────────────────────────────────────────
 
 function setActiveTabBtn(tab) {
@@ -546,6 +660,17 @@ export function initLibrary() {
   pageSizeSelect.value = String(getPageSize());
   tabBtns = document.querySelectorAll('.library-tab-btn');
   addBookBtn = document.getElementById('add-book-btn');
+  importBooksBtn = document.getElementById('import-books-btn');
+  importPanel = document.getElementById('book-import-panel');
+  importTextarea = document.getElementById('import-text');
+  importStatusSelect = document.getElementById('import-status-select');
+  importExtractBtn = document.getElementById('import-extract-btn');
+  importPreviewList = document.getElementById('import-preview-list');
+  importActions = document.getElementById('import-actions');
+  importConfirmBtn = document.getElementById('import-confirm-btn');
+  importCancelBtn = document.getElementById('import-cancel-btn');
+  importError = document.getElementById('import-error');
+  importExtractedBooks = [];
   formDialog = document.getElementById('book-form-dialog');
   bookForm = document.getElementById('book-form');
   bookIdInput = document.getElementById('book-id');
@@ -594,6 +719,12 @@ export function initLibrary() {
 
   // Add book button
   addBookBtn.addEventListener('click', openAddForm);
+
+  // Import button
+  importBooksBtn.addEventListener('click', openImportPanel);
+  importExtractBtn.addEventListener('click', handleExtract);
+  importConfirmBtn.addEventListener('click', handleImportConfirm);
+  importCancelBtn.addEventListener('click', closeImportPanel);
 
   // Status toggle (add form only)
   bookStatusBtns.forEach(btn => {
