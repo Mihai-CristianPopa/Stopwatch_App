@@ -1,5 +1,10 @@
 import { getBackendOrigin } from './checkBackend.js';
-import { getActiveTab, setActiveTab, getBooks, setBooks } from './libraryState.js';
+import {
+  getActiveTab, setActiveTab, getBooks, setBooks,
+  getRenderedCount, setRenderedCount,
+} from './libraryState.js';
+
+const PAGE_SIZE = 20;
 
 // ── API client ────────────────────────────────────────────────────────────────
 
@@ -35,6 +40,18 @@ async function updateBook(id, patch) {
   return data;
 }
 
+async function reorderBooks(status, ids) {
+  const res = await fetch(`${getBackendOrigin()}/books/reorder`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ status, ids }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Failed to reorder books');
+  return data;
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function todayStr() {
@@ -50,28 +67,52 @@ function renderStars(rating) {
   return html;
 }
 
-function formatDate(dateStr) {
+function formatDate(dateStr, precision) {
   if (!dateStr) return '—';
+  const effectivePrecision = precision || inferPrecisionFromStr(dateStr);
+  if (effectivePrecision === 'year') return dateStr.slice(0, 4);
+  if (effectivePrecision === 'month') {
+    const [y, m] = dateStr.split('-').map(Number);
+    return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString('en-US', {
+      year: 'numeric', month: 'short', timeZone: 'UTC',
+    });
+  }
   const [y, m, d] = dateStr.split('-').map(Number);
   return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-US', {
     year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC',
   });
 }
 
+function inferPrecisionFromStr(dateStr) {
+  if (!dateStr) return 'day';
+  if (/^\d{4}$/.test(dateStr)) return 'year';
+  if (/^\d{4}-\d{2}$/.test(dateStr)) return 'month';
+  return 'day';
+}
+
 // ── DOM refs (resolved once on first init) ────────────────────────────────────
 
 let listEl;
+let listMoreBtn;
 let tabBtns;
 let addBookBtn;
 let formDialog;
 let bookForm;
 let bookIdInput;
+let bookStatusToggle;
+let bookStatusBtns;
 let bookTitleInput;
 let bookAuthorInput;
 let bookImageUrlInput;
 let bookSourceInput;
 let bookReadFields;
+let bookDatePrecisionSelect;
+let bookDateReadLabel;
 let bookDateReadInput;
+let bookDateReadMonthLabel;
+let bookDateReadMonthInput;
+let bookDateReadYearLabel;
+let bookDateReadYearInput;
 let bookRatingSelect;
 let bookNotesInput;
 let bookFormError;
@@ -83,10 +124,14 @@ let detailAuthor;
 let detailSource;
 let detailRating;
 let detailNotes;
+let detailNotesToggle;
 let detailEditBtn;
 let confirmDialog;
 let confirmYesBtn;
 let confirmNoBtn;
+let confirmBookTitle;
+let confirmRatingSelect;
+let confirmNotesInput;
 
 // ── Rendering ─────────────────────────────────────────────────────────────────
 
@@ -110,18 +155,49 @@ function buildCoverEl(imageUrl, large = false) {
 
 function renderList(books, tab) {
   listEl.innerHTML = '';
+  const renderedCount = getRenderedCount();
+  const visible = books.slice(0, renderedCount);
 
   if (books.length === 0) {
     const li = document.createElement('li');
     li.className = 'loading';
     li.textContent = tab === 'wishlist' ? 'No books in your wishlist yet.' : 'No books in your read list yet.';
     listEl.appendChild(li);
+    listMoreBtn.hidden = true;
     return;
   }
 
-  books.forEach(book => {
+  visible.forEach((book, idx) => {
     const li = document.createElement('li');
     li.className = 'book-row';
+
+    // reorder controls
+    const reorder = document.createElement('div');
+    reorder.className = 'book-reorder';
+
+    const upBtn = document.createElement('button');
+    upBtn.className = 'reorder-btn';
+    upBtn.textContent = '▲';
+    upBtn.title = 'Move up';
+    upBtn.disabled = idx === 0;
+    upBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      moveBook(idx, idx - 1, tab);
+    });
+
+    const downBtn = document.createElement('button');
+    downBtn.className = 'reorder-btn';
+    downBtn.textContent = '▼';
+    downBtn.title = 'Move down';
+    downBtn.disabled = idx === books.length - 1;
+    downBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      moveBook(idx, idx + 1, tab);
+    });
+
+    reorder.appendChild(upBtn);
+    reorder.appendChild(downBtn);
+    li.appendChild(reorder);
 
     // cover
     li.appendChild(buildCoverEl(book.image_url));
@@ -147,7 +223,7 @@ function renderList(books, tab) {
       starsEl.innerHTML = renderStars(book.rating);
 
       const dateReadEl = document.createElement('span');
-      dateReadEl.textContent = `Read: ${formatDate(book.date_read)}`;
+      dateReadEl.textContent = `Read: ${formatDate(book.date_read, book.date_read_precision)}`;
 
       metaEl.appendChild(starsEl);
       metaEl.appendChild(dateReadEl);
@@ -191,13 +267,37 @@ function renderList(books, tab) {
 
     listEl.appendChild(li);
   });
+
+  listMoreBtn.hidden = renderedCount >= books.length;
+}
+
+// ── Reorder ───────────────────────────────────────────────────────────────────
+
+async function moveBook(fromIdx, toIdx, tab) {
+  const books = getBooks();
+  if (toIdx < 0 || toIdx >= books.length) return;
+
+  // Swap in memory
+  const updated = [...books];
+  [updated[fromIdx], updated[toIdx]] = [updated[toIdx], updated[fromIdx]];
+  setBooks(updated);
+  renderList(updated, tab);
+
+  try {
+    await reorderBooks(tab, updated.map(b => b._id));
+  } catch {
+    // Revert on error
+    await loadBooks(tab);
+  }
 }
 
 // ── Load ──────────────────────────────────────────────────────────────────────
 
 async function loadBooks(tab) {
   setActiveTab(tab);
+  setRenderedCount(PAGE_SIZE);
   listEl.innerHTML = '<li class="loading">Loading…</li>';
+  listMoreBtn.hidden = true;
 
   try {
     const books = await fetchBooks(tab);
@@ -205,6 +305,7 @@ async function loadBooks(tab) {
     renderList(books, tab);
   } catch {
     listEl.innerHTML = '<li class="error">Could not load books.</li>';
+    listMoreBtn.hidden = true;
   }
 }
 
@@ -220,18 +321,40 @@ function showFormError(msg) {
   bookFormError.hidden = false;
 }
 
+function setPrecisionUI(precision) {
+  const p = precision || 'day';
+  bookDatePrecisionSelect.value = p;
+  bookDateReadLabel.hidden = p !== 'day';
+  bookDateReadMonthLabel.hidden = p !== 'month';
+  bookDateReadYearLabel.hidden = p !== 'year';
+}
+
+function setAddFormStatus(status) {
+  bookStatusBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.status === status));
+  if (status === 'read') {
+    bookReadFields.hidden = false;
+    setPrecisionUI('day');
+    bookDateReadInput.value = todayStr();
+  } else {
+    bookReadFields.hidden = true;
+  }
+}
+
 function openAddForm() {
+  const tab = getActiveTab();
   bookFormTitle.textContent = 'Add book';
   bookIdInput.value = '';
   bookForm.reset();
-  bookReadFields.hidden = true;
+  bookStatusToggle.hidden = false;
   clearFormError();
+  setAddFormStatus(tab);
   formDialog.showModal();
 }
 
 function openEditForm(book) {
-  bookFormTitle.textContent = 'Edit book';
+  bookFormTitle.textContent = `Edit ${book.status === 'read' ? 'Read' : 'Wishlist'} book`;
   bookIdInput.value = book._id;
+  bookStatusToggle.hidden = true;
   bookTitleInput.value = book.title;
   bookAuthorInput.value = book.author;
   bookImageUrlInput.value = book.image_url || '';
@@ -240,10 +363,19 @@ function openEditForm(book) {
 
   if (book.status === 'read') {
     bookReadFields.hidden = false;
-    bookDateReadInput.value = book.date_read || '';
+    const precision = book.date_read_precision || inferPrecisionFromStr(book.date_read);
+    setPrecisionUI(precision);
+    if (precision === 'day') {
+      bookDateReadInput.value = book.date_read || '';
+    } else if (precision === 'month') {
+      bookDateReadMonthInput.value = book.date_read || '';
+    } else {
+      bookDateReadYearInput.value = book.date_read ? book.date_read.slice(0, 4) : '';
+    }
     bookRatingSelect.value = book.rating != null ? String(book.rating) : '';
   } else {
     bookReadFields.hidden = true;
+    setPrecisionUI('day');
     bookDateReadInput.value = '';
     bookRatingSelect.value = '';
   }
@@ -273,12 +405,28 @@ async function handleFormSubmit(e) {
     notes: bookNotesInput.value.trim() || null,
   };
 
-  if (isEdit) {
-    const book = getBooks().find(b => b._id === id);
-    if (book && book.status === 'read') {
-      payload.date_read = bookDateReadInput.value || null;
-      payload.rating = bookRatingSelect.value ? parseInt(bookRatingSelect.value, 10) : null;
+  // Determine whether this is a read book (edit always uses book.status; add uses the toggle)
+  const isReadBook = isEdit
+    ? (getBooks().find(b => b._id === id)?.status === 'read')
+    : (bookStatusBtns && [...bookStatusBtns].find(b => b.classList.contains('active'))?.dataset.status === 'read');
+
+  if (!isEdit) {
+    payload.status = isReadBook ? 'read' : 'wishlist';
+  }
+
+  if (isReadBook) {
+    const precision = bookDatePrecisionSelect.value;
+    let dateReadVal = null;
+    if (precision === 'day') {
+      dateReadVal = bookDateReadInput.value || null;
+    } else if (precision === 'month') {
+      dateReadVal = bookDateReadMonthInput.value || null;
+    } else {
+      dateReadVal = bookDateReadYearInput.value ? String(bookDateReadYearInput.value) : null;
     }
+    payload.date_read = dateReadVal;
+    payload.date_read_precision = dateReadVal ? precision : null;
+    payload.rating = bookRatingSelect.value ? parseInt(bookRatingSelect.value, 10) : null;
   }
 
   try {
@@ -297,7 +445,6 @@ async function handleFormSubmit(e) {
 // ── Detail dialog ─────────────────────────────────────────────────────────────
 
 function openDetailDialog(book) {
-  // cover
   detailCover.innerHTML = '';
   detailCover.appendChild(buildCoverEl(book.image_url, true));
 
@@ -307,8 +454,24 @@ function openDetailDialog(book) {
   detailSource.hidden = !book.source;
   detailRating.innerHTML = book.status === 'read' ? renderStars(book.rating) : '';
   detailRating.hidden = book.status !== 'read';
+
+  // Notes with show-more
   detailNotes.textContent = book.notes || '';
   detailNotes.hidden = !book.notes;
+  detailNotes.classList.remove('clamped');
+  detailNotesToggle.hidden = true;
+  detailNotesToggle.textContent = 'Show more';
+
+  if (book.notes) {
+    // Apply clamp first, then check if it actually overflows
+    detailNotes.classList.add('clamped');
+    // Use a length heuristic (180 chars ≈ 3 lines) since layout may not be computed yet
+    if (book.notes.length > 180) {
+      detailNotesToggle.hidden = false;
+    } else {
+      detailNotes.classList.remove('clamped');
+    }
+  }
 
   detailEditBtn.onclick = () => {
     detailDialog.close();
@@ -316,17 +479,33 @@ function openDetailDialog(book) {
   };
 
   detailDialog.showModal();
+
+  // After showModal, check actual overflow to correct the heuristic
+  if (book.notes) {
+    if (detailNotes.scrollHeight > detailNotes.clientHeight) {
+      detailNotesToggle.hidden = false;
+    } else {
+      detailNotes.classList.remove('clamped');
+      detailNotesToggle.hidden = true;
+    }
+  }
 }
 
 // ── Confirm mark-as-read dialog ───────────────────────────────────────────────
 
 function openConfirmMarkRead(book) {
+  confirmBookTitle.textContent = book.title;
+  confirmRatingSelect.value = '';
+  confirmNotesInput.value = '';
   confirmDialog.showModal();
 
   confirmYesBtn.onclick = async () => {
     confirmDialog.close();
+    const patch = { status: 'read', date_read: todayStr(), date_read_precision: 'day' };
+    if (confirmRatingSelect.value) patch.rating = parseInt(confirmRatingSelect.value, 10);
+    if (confirmNotesInput.value.trim()) patch.notes = confirmNotesInput.value.trim();
     try {
-      await updateBook(book._id, { status: 'read', date_read: todayStr() });
+      await updateBook(book._id, patch);
       await loadBooks('wishlist');
     } catch {
       // silent — list unchanged if error
@@ -348,17 +527,26 @@ function setActiveTabBtn(tab) {
 
 export function initLibrary() {
   listEl = document.getElementById('book-list');
+  listMoreBtn = document.getElementById('book-list-more');
   tabBtns = document.querySelectorAll('.library-tab-btn');
   addBookBtn = document.getElementById('add-book-btn');
   formDialog = document.getElementById('book-form-dialog');
   bookForm = document.getElementById('book-form');
   bookIdInput = document.getElementById('book-id');
+  bookStatusToggle = document.getElementById('book-status-toggle');
+  bookStatusBtns = document.querySelectorAll('.book-status-btn');
   bookTitleInput = document.getElementById('book-title');
   bookAuthorInput = document.getElementById('book-author');
   bookImageUrlInput = document.getElementById('book-image-url');
   bookSourceInput = document.getElementById('book-source');
   bookReadFields = document.getElementById('book-read-fields');
+  bookDatePrecisionSelect = document.getElementById('book-date-precision');
+  bookDateReadLabel = document.getElementById('book-date-read-label');
   bookDateReadInput = document.getElementById('book-date-read');
+  bookDateReadMonthLabel = document.getElementById('book-date-read-month-label');
+  bookDateReadMonthInput = document.getElementById('book-date-read-month');
+  bookDateReadYearLabel = document.getElementById('book-date-read-year-label');
+  bookDateReadYearInput = document.getElementById('book-date-read-year');
   bookRatingSelect = document.getElementById('book-rating');
   bookNotesInput = document.getElementById('book-notes');
   bookFormError = document.getElementById('book-form-error');
@@ -370,10 +558,14 @@ export function initLibrary() {
   detailSource = document.getElementById('detail-source');
   detailRating = document.getElementById('detail-rating');
   detailNotes = document.getElementById('detail-notes');
+  detailNotesToggle = document.getElementById('detail-notes-toggle');
   detailEditBtn = document.getElementById('detail-edit-btn');
   confirmDialog = document.getElementById('mark-read-confirm-dialog');
   confirmYesBtn = document.getElementById('confirm-mark-read-yes');
   confirmNoBtn = document.getElementById('confirm-mark-read-no');
+  confirmBookTitle = document.getElementById('mark-read-book-title');
+  confirmRatingSelect = document.getElementById('confirm-rating');
+  confirmNotesInput = document.getElementById('confirm-notes');
 
   // Tab segmented control
   tabBtns.forEach(btn => {
@@ -387,6 +579,11 @@ export function initLibrary() {
   // Add book button
   addBookBtn.addEventListener('click', openAddForm);
 
+  // Status toggle (add form only)
+  bookStatusBtns.forEach(btn => {
+    btn.addEventListener('click', () => setAddFormStatus(btn.dataset.status));
+  });
+
   // Form submit
   bookForm.addEventListener('submit', handleFormSubmit);
 
@@ -395,9 +592,32 @@ export function initLibrary() {
     formDialog.close();
   });
 
+  // Date precision toggle
+  bookDatePrecisionSelect.addEventListener('change', () => {
+    setPrecisionUI(bookDatePrecisionSelect.value);
+  });
+
   // Detail close
   document.getElementById('detail-close-btn').addEventListener('click', () => {
     detailDialog.close();
+  });
+
+  // Notes show-more toggle
+  detailNotesToggle.addEventListener('click', () => {
+    const isExpanded = !detailNotes.classList.contains('clamped');
+    if (isExpanded) {
+      detailNotes.classList.add('clamped');
+      detailNotesToggle.textContent = 'Show more';
+    } else {
+      detailNotes.classList.remove('clamped');
+      detailNotesToggle.textContent = 'Show less';
+    }
+  });
+
+  // Show more (pagination)
+  listMoreBtn.addEventListener('click', () => {
+    setRenderedCount(getRenderedCount() + PAGE_SIZE);
+    renderList(getBooks(), getActiveTab());
   });
 
   // Close dialogs on backdrop click
