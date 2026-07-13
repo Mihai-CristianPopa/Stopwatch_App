@@ -81,4 +81,13 @@ export const ERROR_OBJECTS = {
       statusCode: 500,
       message: "Internal server error. Please try again later.",
     },
+    INVALID_BOOK: (details) => ({
+      statusCode: 400,
+      message: "Invalid book data.",
+      details: details || "title and author are required and all fields must be valid.",
+    }),
+    BOOK_NOT_FOUND: () => ({
+      statusCode: 404,
+      message: "Book not found.",
+    }),
 }
