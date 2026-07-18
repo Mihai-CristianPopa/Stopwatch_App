@@ -1,10 +1,11 @@
 import bcrypt from "bcrypt";
 import logger from "../logger.js";
 import { errorObj, warnLog, infoLog } from "../loggerHelper.js";
-import { ERROR_OBJECTS, INFO_MESSAGE, loginErrorMessageWrongCredentialsFrontendFacing } from "../utils/constants.js";
+import { ERROR_OBJECTS, INFO_MESSAGE, loginErrorMessageWrongCredentialsFrontendFacing, DB_KEYS } from "../utils/constants.js";
 import { getUserByEmail } from "../services/userService.js";
 import { createLoginSession } from "../services/sessionService.js";
 import { setSessionCookie, createLoginSessionClearingIndex, sessionExpirationTimeInMiliseconds } from "../utils/sessionCookieHandling.js";
+import { getClearingIndexExpireAfterSeconds } from "../services/commonService.js"
 
 export const loginController = async (req, res) => {
   const startTime = Date.now();
@@ -43,8 +44,8 @@ export const loginController = async (req, res) => {
       return handleLoginError(ERROR_OBJECTS.WRONG_PASSWORD(email), loginErrorMessageWrongCredentialsFrontendFacing);
     }
 
-    // Only try reseting the clearing index if the time to maintain the cookies in the db changes
-    if (sessionExpirationTimeInMiliseconds  !== 24 * 60 * 60 * 1000) await setClearingIndexForSessionCookies();
+    // Only reset the clearing index if the time to maintain the cookies in the db is different than the current TTL of the index
+    if (getClearingIndexExpireAfterSeconds(DB_KEYS.AUTH_DB, DB_KEYS.SESSIONS_COLLECTION, DB_KEYS.TTL_FIELD) !== sessionExpirationTimeInMiliseconds / 1000) await setClearingIndexForSessionCookies();
 
     const login_time = new Date().toISOString();
 

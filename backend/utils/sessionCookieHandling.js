@@ -1,9 +1,10 @@
 import { createClearingIndex } from "../services/commonService.js";
 import logger from "../logger.js";
+import { DB_KEYS } from "../utils/constants.js";
 
 const SESSION_COOKIE_NAME = 'sid';
 
-export const sessionExpirationTimeInMiliseconds = 24 * 60 * 60 * 1000;
+export const sessionExpirationTimeInMiliseconds = 10 * 24 * 60 * 60 * 1000;
 
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
@@ -45,7 +46,7 @@ export const isSessionExpired = (loginTimeISO) => {
 
 export const createLoginSessionClearingIndex = async () => {
   try {
-    const loginClearingIndex = await createClearingIndex("stopwatch_auth", "sessions", "last_login_time", sessionExpirationTimeInMiliseconds);
+    const loginClearingIndex = await createClearingIndex(DB_KEYS.AUTH_DB, DB_KEYS.SESSIONS_COLLECTION, DB_KEYS.TTL_FIELD, sessionExpirationTimeInMiliseconds / 1000);
     return loginClearingIndex;
   } catch(error) {
     logger.error("createLoginSessionClearingIndex failed.", error);

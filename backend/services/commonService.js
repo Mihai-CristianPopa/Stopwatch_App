@@ -1,6 +1,24 @@
 import dbClient from "../db/mongoClient.js";
 import logger from "../logger.js";
 
+export async function getClearingIndexExpireAfterSeconds(databaseName, collectionName, timestampColumn){
+    const db = dbClient.db(databaseName);
+    const collection = db.collection(collectionName);
+
+    const indexName = `${timestampColumn}_1`;
+    try {
+        const indexExists = await collection.indexExists(indexName);
+        if (indexExists) {
+            const indexes = await collection.indexes();
+            const currentIndex = indexes.find(index => index.name === indexName);
+            return currentIndex.expireAfterSeconds
+        }
+    } catch (error) {
+        logger.error(`Failed to get the expireAfterSeconds property for index ${indexName}:`, error);
+        throw error;
+    }
+}
+
 export async function createClearingIndex(databaseName, collectionName, timestampColumn, numberOfSecondsBeforeExpiry) {
     const db = dbClient.db(databaseName);
     const collection = db.collection(collectionName);

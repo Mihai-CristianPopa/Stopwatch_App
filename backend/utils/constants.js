@@ -91,3 +91,9 @@ export const ERROR_OBJECTS = {
       message: "Book not found.",
     }),
 }
+
+export const DB_KEYS = {
+  AUTH_DB: "stopwatch_auth",
+  SESSIONS_COLLECTION: "sessions",
+  TTL_FIELD: "last_login_time"
+}
