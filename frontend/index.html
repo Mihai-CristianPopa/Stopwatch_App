@@ -13,6 +13,7 @@
     <nav>
       <button id="nav-stopwatch" class="nav-btn active">Stopwatch</button>
       <button id="nav-history" class="nav-btn">History</button>
+      <button id="nav-library" class="nav-btn">Library</button>
     </nav>
     <div class="header-user">
       <span id="user-email"></span>
@@ -108,6 +109,119 @@
       <ul id="daily-totals-list" class="totals-list"></ul>
     </div>
   </main>
+
+  <!-- Library view -->
+  <main id="library-view" hidden>
+    <div class="card library-card">
+      <div class="totals-header">
+        <h2>Library</h2>
+        <button id="add-book-btn" class="btn-primary">Add book</button>
+      </div>
+      <div class="preset-buttons library-tabs">
+        <button class="library-tab-btn preset-btn active" data-tab="wishlist">Wishlist</button>
+        <button class="library-tab-btn preset-btn" data-tab="read">Read</button>
+      </div>
+      <ul id="book-list" class="book-list"></ul>
+      <div id="book-pagination" class="book-pagination" hidden>
+        <button type="button" id="page-prev-btn" class="reorder-btn" aria-label="Previous page">◀</button>
+        <span id="page-indicator"></span>
+        <button type="button" id="page-next-btn" class="reorder-btn" aria-label="Next page">▶</button>
+        <label class="page-size-label">Per page
+          <select id="page-size-select">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+          </select>
+        </label>
+      </div>
+    </div>
+  </main>
+
+  <!-- Add / Edit book dialog -->
+  <dialog id="book-form-dialog" class="book-dialog">
+    <form id="book-form" method="dialog">
+      <h3 id="book-form-title">Add book</h3>
+      <input type="hidden" id="book-id" />
+      <div id="book-status-toggle" class="preset-buttons book-status-toggle">
+        <button type="button" class="book-status-btn preset-btn active" data-status="wishlist">Wishlist</button>
+        <button type="button" class="book-status-btn preset-btn" data-status="read">Read</button>
+      </div>
+      <label><span class="label-text">Title <span class="req">*</span></span><input type="text" id="book-title" required maxlength="300" /></label>
+      <label><span class="label-text">Author <span class="req">*</span></span><input type="text" id="book-author" required maxlength="300" /></label>
+      <label>Cover image URL <input type="text" id="book-image-url" /></label>
+      <label>Source <input type="text" id="book-source" placeholder="e.g. Bookster, Online, Owned" /></label>
+      <div id="book-read-fields" hidden>
+        <label>Date read precision
+          <select id="book-date-precision">
+            <option value="day">Full date</option>
+            <option value="month">Month &amp; year</option>
+            <option value="year">Year only</option>
+          </select>
+        </label>
+        <label id="book-date-read-label">Date read <input type="date" id="book-date-read" /></label>
+        <label id="book-date-read-month-label" hidden>Month read <input type="month" id="book-date-read-month" /></label>
+        <label id="book-date-read-year-label" hidden>Year read <input type="number" id="book-date-read-year" min="1000" max="9999" placeholder="YYYY" /></label>
+        <label>Rating
+          <select id="book-rating">
+            <option value="">— no rating —</option>
+            <option value="1">1 ★</option>
+            <option value="2">2 ★★</option>
+            <option value="3">3 ★★★</option>
+            <option value="4">4 ★★★★</option>
+            <option value="5">5 ★★★★★</option>
+          </select>
+        </label>
+      </div>
+      <label>Notes <textarea id="book-notes" rows="3"></textarea></label>
+      <p id="book-form-error" class="error-msg" hidden></p>
+      <div class="dialog-actions">
+        <button type="button" id="book-form-cancel" class="btn-secondary">Cancel</button>
+        <button type="submit" class="btn-primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Book detail dialog -->
+  <dialog id="book-detail-dialog" class="book-dialog">
+    <div class="book-detail">
+      <div id="detail-cover"></div>
+      <h3 id="detail-title"></h3>
+      <p id="detail-author" class="book-detail-author"></p>
+      <p id="detail-source" class="book-detail-source" hidden></p>
+      <div id="detail-rating" class="star-rating" hidden></div>
+      <p id="detail-notes" class="book-detail-notes" hidden></p>
+      <button type="button" id="detail-notes-toggle" class="link-btn" hidden>Show more</button>
+      <div class="dialog-actions">
+        <button type="button" id="detail-edit-btn" class="btn-secondary">Edit</button>
+        <button type="button" id="detail-close-btn" class="btn-primary">Close</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Mark as Read confirmation dialog -->
+  <dialog id="mark-read-confirm-dialog" class="book-dialog confirm-dialog">
+    <h3 id="mark-read-book-title" class="confirm-dialog-title"></h3>
+    <p>Move this book to your Read list?</p>
+    <div class="confirm-dialog-optional">
+      <label><span class="label-text">Rating (optional)</span>
+        <select id="confirm-rating">
+          <option value="">— no rating —</option>
+          <option value="1">1 ★</option>
+          <option value="2">2 ★★</option>
+          <option value="3">3 ★★★</option>
+          <option value="4">4 ★★★★</option>
+          <option value="5">5 ★★★★★</option>
+        </select>
+      </label>
+      <label><span class="label-text">Notes (optional)</span>
+        <textarea id="confirm-notes" rows="3"></textarea>
+      </label>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" id="confirm-mark-read-no" class="btn-secondary">Cancel</button>
+      <button type="button" id="confirm-mark-read-yes" class="btn-primary">Mark as Read</button>
+    </div>
+  </dialog>
 
   <script type="module" src="js/app.js"></script>
 </body>
