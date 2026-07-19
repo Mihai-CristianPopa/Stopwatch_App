@@ -273,7 +273,7 @@ export function rerenderActiveRange() {
 
 export function initHistoryControls() {
   const today = todayStr();
-  const presetBtns = document.querySelectorAll('.preset-btn');
+  const dateRangeBtns = document.querySelectorAll('.date-range-btn');
   const customRangeEl = document.getElementById('custom-range');
   const customFromEl = document.getElementById('custom-from');
   const customToEl = document.getElementById('custom-to');
@@ -283,14 +283,14 @@ export function initHistoryControls() {
   customToEl.max = today;
 
   function setActivePreset(preset) {
-    presetBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.preset === preset));
+    dateRangeBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.preset === preset));
   }
 
   function checkApplyEnabled() {
     applyBtn.disabled = !(customFromEl.value && customToEl.value);
   }
 
-  presetBtns.forEach(btn => {
+  dateRangeBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       const preset = btn.dataset.preset;
       setActivePreset(preset);
