@@ -276,7 +276,7 @@ function renderList(books, tab) {
     listEl.appendChild(li);
   });
 
-  paginationEl.hidden = totalPages <= 1;
+  paginationEl.hidden = false;
   pageIndicator.textContent = `Page ${currentPage} of ${totalPages}`;
   pagePrevBtn.disabled = currentPage === 1;
   pageNextBtn.disabled = currentPage === totalPages;
