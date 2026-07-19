@@ -4,6 +4,7 @@ import { initStopwatch, fetchTodayTotal, flushPendingQueue } from './stopwatch.j
 import { initHistoryControls, rerenderActiveRange } from './dailyTotalsView.js';
 import { initLibrary, showLibrary } from './libraryView.js';
 import { resolveBackendOrigin, setBackendOrigin } from './checkBackend.js';
+import { setActiveTabBtn } from "./common.js";
 
 const views = {
   loading: document.getElementById('loading-view'),
@@ -13,9 +14,21 @@ const views = {
   library: document.getElementById('library-view'),
 };
 
+const navButtons = document.querySelectorAll('.nav-btn');
+
+let activeNavButton = "stopwatch";
+
+function setActiveNavButton(navButtonTabName) {
+  activeNavButton = navButtonTabName;
+}
+
 function showView(name) {
   for (const [key, el] of Object.entries(views)) {
     el.hidden = key !== name;
+  }
+  if (["stopwatch", "history", "library"].includes(name)) {
+    setActiveNavButton(name);
+    setActiveTabBtn(navButtons, name);
   }
 }
 
