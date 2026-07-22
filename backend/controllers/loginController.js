@@ -45,7 +45,8 @@ export const loginController = async (req, res) => {
     }
 
     // Only reset the clearing index if the time to maintain the cookies in the db is different than the current TTL of the index
-    if (getClearingIndexExpireAfterSeconds(DB_KEYS.AUTH_DB, DB_KEYS.SESSIONS_COLLECTION, DB_KEYS.TTL_FIELD) !== sessionExpirationTimeInMiliseconds / 1000) await setClearingIndexForSessionCookies();
+    const curentClearingIndexExpirationTimeInSeconds = await getClearingIndexExpireAfterSeconds(DB_KEYS.AUTH_DB, DB_KEYS.SESSIONS_COLLECTION, DB_KEYS.TTL_FIELD);
+    if (curentClearingIndexExpirationTimeInSeconds !== sessionExpirationTimeInMiliseconds / 1000) await setClearingIndexForSessionCookies();
 
     const login_time = new Date().toISOString();
 
