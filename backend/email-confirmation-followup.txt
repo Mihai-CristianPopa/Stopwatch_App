@@ -1,0 +1,14 @@
+Whenever a new user registers, we want to add an extra field in the registration table isVerified and we set it to false.
+registerController, line 41;
+
+Then, also if the registration was successful, I think we should call the send-mail service. What do we do if the email service fails? Could we call the email service with next from authenticationRoutes?
+ 
+If the email is sent successfully, then we must make sure that at frontend side we inform the user the exact email address that is sending the email to him and that the email will most probably be categorized as spam. We would need to adjust the authUI.js, _handleRegister method so that after the registration is successful we inform the user that he needs to confirm the email address.
+
+Then we need to update the url that we provide the user for the confirmation.
+
+We need a new controller to update the isVerified key to True when the user clicks the respective link. We must make sure that user with id x clicked on the confirmation link ending with id x. We will use the userId to construct the confirmation link.
+
+Also we will need to construct the url dynamically as we have either localhost or the deployment.
+
+And only after user was registered, and also clicked on the confirmation link we can allow the user to login.

@@ -1,7 +1,7 @@
 import { createTransport } from "nodemailer";
 import { emailConfirmationHtml } from "../utils/emailConfirmationHtmlWrapper.js";
 export const sendMail = async (receiver) => {
-    const email = emailConfirmationHtml("localhost:7000/health");
+    const email = emailConfirmationHtml("http://localhost:7000/health");
     // emailConfirmationH
 
     const transporter = createTransport({

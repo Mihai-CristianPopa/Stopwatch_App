@@ -231,10 +231,10 @@ export const emailConfirmationHtml = (url) => `<!doctype html>
 
                                             <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
                                                 <tr>
-                                                    <td align="center" bgcolor="#2F67F6" role="presentation" style="border:none;border-radius:3px;color:#ffffff;cursor:auto;padding:15px 25px;" valign="middle">
-                                                        <p style="background:#2F67F6;color:#ffffff;font-family:'Helvetica Neue',Arial,sans-serif;font-size:15px;font-weight:normal;line-height:120%;Margin:0;text-decoration:none;text-transform:none;">
+                                                    <td align="center" bgcolor="#2F67F6" role="presentation" style="border:none;border-radius:3px;color:#ffffff;cursor:auto;padding:0;" valign="middle">
+                                                        <a href="${url}" style="background:#2F67F6;border-radius:3px;color:#ffffff;display:block;font-family:'Helvetica Neue',Arial,sans-serif;font-size:15px;font-weight:normal;line-height:120%;Margin:0;padding:15px 25px;text-decoration:none;text-transform:none;">
                                                             Confirm Your Email
-                                                        </p>
+                                                        </a>
                                                     </td>
                                                 </tr>
                                             </table>
