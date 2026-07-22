@@ -56,6 +56,14 @@ class AuthUI {
     form.querySelector('button[type=submit]').disabled = loading;
   }
 
+  _clearEmail() {
+    document.getElementById('login-email').value = "";
+  }
+
+  _clearPassword() {
+    document.getElementById('login-password').value = "";
+  }
+
   async _handleLogin() {
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value;
@@ -98,6 +106,8 @@ class AuthUI {
 
   async _handleLogout() {
     await authService.logout();
+    this._clearEmail();
+    this._clearPassword();
     this.onLogout();
   }
 }
