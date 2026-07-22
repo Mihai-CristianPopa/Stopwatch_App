@@ -6,7 +6,7 @@ import { ERROR_OBJECTS, INFO_MESSAGE } from "../utils/constants.js";
 
 const METHOD_FAILURE_MESSAGE = "registerController failed.";
 
-export const registerController = async (req, res) => {
+export const registerController = async (req, res, next) => {
   const startTime = Date.now();
   const { email, password } = req.body;
   let err;
@@ -37,13 +37,16 @@ export const registerController = async (req, res) => {
       email_address: email,
       password: hashedPassword,
       created_at: new Date(),
+      isVerified: false,
       date: new Date().toISOString().split('T')[0]
     });
 
     infoLog(req, startTime, INFO_MESSAGE.USER_REGISTERED(email));
-    res.status(201).json({
-      message: INFO_MESSAGE.USER_REGISTERED(email)
-    });
+    res.locals.newUser = { userId: newUser.insertedId.toString(), email: email };
+    return next();
+    // res.status(201).json({
+    //   message: INFO_MESSAGE.USER_REGISTERED(email)
+    // });
   } catch(error) {
     logger.error(`${METHOD_FAILURE_MESSAGE} for ${email}`, errorObj(req, startTime, error));
     res.status(500).json(ERROR_OBJECTS.FRONTEND_INTERNAL_SERVER_ERROR);

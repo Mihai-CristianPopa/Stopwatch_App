@@ -16,6 +16,8 @@ router.post("/login", loginController);
 
 router.post("/register", registerController);
 
+// router.post("/email-confirmation", );
+
 router.get("/me", requireAuthentication, (req, res) => {
   updateLoginSession(req.sid, new Date().toISOString());
   return res.status(200).json({

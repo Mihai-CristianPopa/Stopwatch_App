@@ -1,8 +1,10 @@
 import { createTransport } from "nodemailer";
 import { emailConfirmationHtml } from "../utils/emailConfirmationHtmlWrapper.js";
+import { config } from "../configs/config.js";
+// Pass in the new user including the email and the userId
 export const sendMail = async (receiver) => {
-    const email = emailConfirmationHtml("http://localhost:7000/health");
-    // emailConfirmationH
+    const confirmationUrl = (config.isProduction ? prod_url : "http://localhost:7000/") + "auth/email-confirmation?" + receiver.UserId;  
+    const email = emailConfirmationHtml(confirmationUrl);
 
     const transporter = createTransport({
         service: "Mailgun", // Use any Service ID from the table below (matching is case-insensitive)
@@ -17,7 +19,7 @@ export const sendMail = async (receiver) => {
 // postmaster@sandboxfc10e6a9fc394c2087aabb9cfbf05029.mailgun.org
     const info = await transporter.sendMail({
         from: 'postmaster@sandboxfc10e6a9fc394c2087aabb9cfbf05029.mailgun.org', // sender address
-        to: receiver, // list of recipients
+        to: receiver.email, // list of recipients
         subject: "Hello with html", // subject line
         // text: "Hello world test?", // plain text body
         html: email, // HTML body
