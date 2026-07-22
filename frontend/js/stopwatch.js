@@ -126,6 +126,9 @@ export async function flushPendingQueue() {
     const { userId: _, ...payload } = item;
     const ok = await postInterval(payload);
     if (!ok) remaining.push(item);
+    else {
+      addTodayTotalMs(new Date(payload.end_time) - new Date(payload.start_time));
+    }
   }
   savePendingQueue(remaining);
 }
