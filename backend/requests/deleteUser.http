@@ -1,0 +1,18 @@
+### First make sure a user is registered
+POST http://localhost:7000/authentication/register HTTP/1.1
+content-type: application/json
+
+{
+    "email": "michaelScott@dundermifflin.com",
+    "password": "davidWallaceIsAFool"
+}
+
+### Successful delete request
+DELETE http://localhost:7000/authentication/delete-user?email=mihaicristianpopa%proton.me HTTP/1.1
+content-type: application/json
+
+###
+
+# Failed delete request
+DELETE http://localhost:7000/authentication/delete-user HTTP/1.1
+content-type: application/json

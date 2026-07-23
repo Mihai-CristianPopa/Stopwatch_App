@@ -5,6 +5,8 @@ import { logoutController } from "../controllers/logoutController.js";
 import { requireAuthentication } from "../middleware/authMiddleware.js";
 import { checkDatabaseForAuth } from "../middleware/dbIsUpMiddleware.js";
 import { updateLoginSession } from "../services/sessionService.js";
+import { deleteUserController } from "../controllers/deleteUserController.js";
+import { emailConfirmationController } from "../controllers/emailConfirmationController.js";
 
 const router = express.Router();
 
@@ -16,7 +18,9 @@ router.post("/login", loginController);
 
 router.post("/register", registerController);
 
-// router.post("/email-confirmation", );
+router.post("/delete-user", deleteUserController);
+
+router.post("/email-confirmation", emailConfirmationController);
 
 router.get("/me", requireAuthentication, (req, res) => {
   updateLoginSession(req.sid, new Date().toISOString());
