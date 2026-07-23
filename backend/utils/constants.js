@@ -12,7 +12,7 @@ const STANDARD_UNAUTH_COOKIE_OBJ = {
 }
 
 export const INFO_MESSAGE = {
-  USER_REGISTERED: (email) => `User ${email} registered successfully`,
+  USER_REGISTERED: (email) => `User ${email} registered and successfully received an email confirmation.`,
   LOGIN_SESSION_CREATED: (sessionId, email) => `Login session with id ${sessionId} has been created for user with email address ${email}`,
   USER_LOGGED_IN: (email) => `User with email ${email} has been logged in.`,
   USER_LOGGED_OUT: "User was logged out successfully.",
