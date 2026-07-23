@@ -1,0 +1,3 @@
+### First make sure a user is registered
+POST http://localhost:7000/authentication/email-confirmation?userId=123456&token=3333 HTTP/1.1
+content-type: application/json

@@ -8,6 +8,7 @@ class AuthUI {
     this.authView = document.getElementById('auth-view');
     this.loginForm = document.getElementById('login-form');
     this.registerForm = document.getElementById('register-form');
+    this.confirmationEmailScreen = document.getElementById('email-confirmation-screen');
     this.errorDiv = document.getElementById('auth-error');
 
     this._setupListeners();
@@ -33,12 +34,21 @@ class AuthUI {
   _showLogin() {
     this.loginForm.hidden = false;
     this.registerForm.hidden = true;
+    this.confirmationEmailScreen.hidden = true;
     this._clearError();
   }
 
   _showRegister() {
     this.loginForm.hidden = true;
     this.registerForm.hidden = false;
+    this.confirmationEmailScreen.hidden = true;
+    this._clearError();
+  }
+
+  _showEmailConfirmation() {
+      this.loginForm.hidden = true;
+    this.registerForm.hidden = true;
+    this.confirmationEmailScreen.hidden = false;
     this._clearError();
   }
 
@@ -97,8 +107,11 @@ class AuthUI {
 
     this._setLoading(this.registerForm, false);
     if (result.ok) {
-      document.getElementById('login-email').value = email;
-      this._showLogin();
+      // Here I need to show the user that he received an email and he needs to confirm it to proceed
+      // And not yet set up the login
+      this._showEmailConfirmation();
+      // document.getElementById('login-email').value = email;
+      // this._showLogin();
     } else {
       this._showError(result.message);
     }
