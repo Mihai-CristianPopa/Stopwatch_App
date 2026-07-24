@@ -3,7 +3,7 @@ import logger from "../logger.js";
 import { errorObj, warnLog, infoLog } from "../loggerHelper.js";
 import { ERROR_OBJECTS, INFO_MESSAGE, loginErrorMessageWrongCredentialsFrontendFacing, DB_KEYS } from "../utils/constants.js";
 import { getUserByEmail } from "../services/userService.js";
-import { createLoginSession } from "../services/sessionService.js";
+import { createLoginSession, getUserLoginSession, updateLoginSession } from "../services/sessionService.js";
 import { setSessionCookie, createLoginSessionClearingIndex, sessionExpirationTimeInMiliseconds } from "../utils/sessionCookieHandling.js";
 import { getClearingIndexExpireAfterSeconds } from "../services/commonService.js"
 
@@ -48,18 +48,30 @@ export const loginController = async (req, res) => {
     const curentClearingIndexExpirationTimeInSeconds = await getClearingIndexExpireAfterSeconds(DB_KEYS.AUTH_DB, DB_KEYS.SESSIONS_COLLECTION, DB_KEYS.TTL_FIELD);
     if (curentClearingIndexExpirationTimeInSeconds !== sessionExpirationTimeInMiliseconds / 1000) await setClearingIndexForSessionCookies();
 
+
+    const existingSession = await getUserLoginSession(existingUser._id);
     const login_time = new Date().toISOString();
+    let cookieIdToPass;
 
-    const sessionData = await createLoginSession({
-      user_id: existingUser._id,
-      email_address: existingUser.email_address,
-      login_time,
-      last_login_time: login_time
-    });
-
-    infoLog(req, startTime, INFO_MESSAGE.LOGIN_SESSION_CREATED(sessionData.insertedId.toString(), email));
-
-    setSessionCookie(res, sessionData.insertedId.toString());
+    if (!existingSession) {
+      const sessionData = await createLoginSession({
+        user_id: existingUser._id,
+        email_address: existingUser.email_address,
+        login_time,
+        last_login_time: login_time
+      });
+      cookieIdToPass = sessionData.insertedId.toString();
+      infoLog(req, startTime, INFO_MESSAGE.LOGIN_SESSION_CREATED(cookieIdToPass, email));
+    } else {
+      // update existing session last login time
+      const properlyUpdatedSession = await updateLoginSession(existingSession._id, login_time)
+      if (!properlyUpdatedSession) {
+        warnLog(req, startTime, `Session with id ${existingSession._id.toString()} did not get it's last login time updated for ${email}`);
+      }
+      infoLog(req, startTime, `Session with id ${existingSession._id.toString()} was reused for ${email}`);
+      cookieIdToPass = existingSession._id.toString();
+    }
+    setSessionCookie(res, cookieIdToPass);
 
     infoLog(req, startTime, INFO_MESSAGE.USER_LOGGED_IN(email));
     return res.status(200).json({

@@ -19,6 +19,12 @@ export function getLoginSession(sessionId) {
   return collection.findOne({ _id: new ObjectId(sessionId) });
 }
 
+export function getUserLoginSession(userId) {
+  const db = client.db("stopwatch_auth");
+  const collection = db.collection("sessions");
+  return collection.findOne({ user_id: new ObjectId(userId) });
+}
+
 export function updateLoginSession(sessionId, lastLoginTime) {
   const db = client.db("stopwatch_auth");
   const collection = db.collection("sessions");
