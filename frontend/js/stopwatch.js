@@ -2,11 +2,13 @@ import { setTodayTotalMs, addTodayTotalMs, getTodayTotalMs } from './todayState.
 import { getBackendOrigin } from './checkBackend.js';
 import authService from './authService.js';
 
-const STORAGE_KEY = 'stopwatch:active';
 const PENDING_KEY = 'stopwatch:pending';
 const TICK_INTERVAL_MS = 250;
+const STALE_THRESHOLD_MS = 3 * 60 * 60 * 1000;
 
 let tickTimer = null;
+let activeStartTime = null;
+let activeStartTzOffset = null;
 
 function formatDuration(ms) {
   const totalSec = Math.floor(ms / 1000);
@@ -67,7 +69,9 @@ function tick(startTime) {
   getDisplayEl().textContent = formatDuration(elapsed);
 }
 
-function enterRunningState(startTime) {
+function enterRunningState(startTime, tzOffset) {
+  activeStartTime = startTime;
+  activeStartTzOffset = tzOffset ?? new Date().getTimezoneOffset();
   getStartBtn().hidden = true;
   getStopBtn().hidden = false;
   clearInterval(tickTimer);
@@ -76,6 +80,8 @@ function enterRunningState(startTime) {
 }
 
 function enterIdleState() {
+  activeStartTime = null;
+  activeStartTzOffset = null;
   clearInterval(tickTimer);
   tickTimer = null;
   getStartBtn().hidden = false;
@@ -112,6 +118,56 @@ async function postInterval(payload) {
   return response.ok;
 }
 
+function updateSessionStopwatchState(startTime) {
+  fetch(`${getBackendOrigin()}/session/stopwatch-state`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ start_time: startTime ?? null })
+  }).catch(() => {});
+}
+
+function showStaleSessionDialog(startTime) {
+  const durationMs = Date.now() - startTime;
+  const dialog = document.getElementById('stale-session-dialog');
+  document.getElementById('stale-session-message').textContent =
+    `Your stopwatch has been running for ${formatDurationHuman(durationMs)}. Was this intentional?`;
+
+  dialog.showModal();
+
+  document.getElementById('stale-session-save').onclick = async () => {
+    dialog.close();
+    const endTime = Date.now();
+    const payload = {
+      start_time: new Date(startTime).toISOString(),
+      end_time: new Date(endTime).toISOString(),
+      start_tz_offset_min: new Date(startTime).getTimezoneOffset(),
+      end_tz_offset_min: new Date().getTimezoneOffset()
+    };
+    const ok = await postInterval(payload);
+    if (ok) {
+      addTodayTotalMs(endTime - startTime);
+      renderTodayTotal();
+      showToast(`Saved ${formatDurationHuman(durationMs)}`);
+    } else {
+      showToast('Could not save — try again later.');
+    }
+    updateSessionStopwatchState(null);
+    enterIdleState();
+  };
+
+  document.getElementById('stale-session-discard').onclick = () => {
+    dialog.close();
+    updateSessionStopwatchState(null);
+    enterIdleState();
+  };
+
+  document.getElementById('stale-session-continue').onclick = () => {
+    dialog.close();
+    enterRunningState(startTime);
+  };
+}
+
 export async function flushPendingQueue() {
   const queue = loadPendingQueue();
   if (queue.length === 0) return;
@@ -133,48 +189,34 @@ export async function flushPendingQueue() {
   savePendingQueue(remaining);
 }
 
-export function initStopwatch() {
+export function initStopwatch(sessionStopwatchStartTime) {
   const startBtn = getStartBtn();
   const stopBtn = getStopBtn();
 
-  // Resume if a run was active before the page was refreshed
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored) {
-    try {
-      const { startTime } = JSON.parse(stored);
-      if (startTime) {
-        enterRunningState(startTime);
-      }
-    } catch {
-      localStorage.removeItem(STORAGE_KEY);
+  if (sessionStopwatchStartTime) {
+    const startTime = new Date(sessionStopwatchStartTime).getTime();
+    if (Date.now() - startTime > STALE_THRESHOLD_MS) {
+      showStaleSessionDialog(startTime);
+    } else {
+      enterRunningState(startTime);
     }
   }
 
   startBtn.addEventListener('click', () => {
     const startTime = Date.now();
-    const startTzOffset = new Date().getTimezoneOffset();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ startTime, startTzOffset }));
+    updateSessionStopwatchState(new Date(startTime).toISOString());
     enterRunningState(startTime);
   });
 
   stopBtn.addEventListener('click', async () => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) return;
+    if (!activeStartTime) return;
 
-    let startTime, startTzOffset;
-    try {
-      ({ startTime, startTzOffset } = JSON.parse(stored));
-    } catch {
-      localStorage.removeItem(STORAGE_KEY);
-      enterIdleState();
-      return;
-    }
-
+    const startTime = activeStartTime;
+    const startTzOffset = activeStartTzOffset;
     const endTime = Date.now();
     const endTzOffset = new Date().getTimezoneOffset();
     const durationMs = endTime - startTime;
 
-    localStorage.removeItem(STORAGE_KEY);
     enterIdleState();
 
     // Optimistic update — show the new total immediately
@@ -189,7 +231,10 @@ export function initStopwatch() {
     };
 
     try {
-      const ok = await postInterval(payload);
+      const [ok] = await Promise.all([
+        postInterval(payload),
+        updateSessionStopwatchState(null)
+      ]);
       if (ok) {
         showToast(`Saved ${formatDurationHuman(durationMs)}`);
         flushPendingQueue();

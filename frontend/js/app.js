@@ -54,12 +54,19 @@ document.getElementById('nav-library').addEventListener('click', () => {
   showLibrary();
 });
 
+function onUserReady(justLoggedIn = false) {
+  if (justLoggedIn) fetchTodayTotal();
+  initStopwatch(authService.stopwatchStartTime);
+  flushPendingQueue();
+  initHistoryControls();
+  initLibrary();
+}
+
 // Init auth UI — delegates login/register/logout handling
 new AuthUI({
   onAuthenticated: (user) => {
-    showApp(user, true);
-    // After login
-    fetchTodayTotal();
+    showApp(user);
+    onUserReady(true);
   },
   onLogout: () => showAuth()
 });
@@ -72,12 +79,8 @@ new AuthUI({
   const [authenticated] = await Promise.all([authService.initialize(), fetchTodayTotal()]);
   if (authenticated) {
     showApp(authService.user);
+    onUserReady();
   } else {
     showAuth();
   }
-  // Push leftover intervals from earlier
-  flushPendingQueue();
-  initStopwatch();
-  initHistoryControls();
-  initLibrary();
 })();
