@@ -8,7 +8,9 @@ import intervalRoutes from "./routes/intervalRoutes.js";
 import { config } from "./configs/config.js";
 import { ensureIndexes } from "./services/intervalService.js";
 import { ensureIndexes as ensureBookIndexes } from "./services/bookService.js";
+import { ensureSessionIndexes } from "./services/sessionService.js";
 import bookRoutes from "./routes/bookRoutes.js";
+import sessionRoutes from "./routes/sessionRoutes.js";
 import { sendMail } from "./services/mailService.js";
 
 const app = express();
@@ -23,6 +25,7 @@ function setupRoutes() {
   app.use("/authentication", authenticationRoutes);
   app.use("/intervals", intervalRoutes);
   app.use("/books", bookRoutes);
+  app.use("/session", sessionRoutes);
 
   app.get("/health", async (req, res) => {
     if (app.locals.dbIsDown) {
@@ -76,6 +79,7 @@ async function startServer() {
     try {
       await ensureIndexes();
       await ensureBookIndexes();
+      await ensureSessionIndexes();
     } catch (err) {
       logger.error("Failed to ensure indexes on startup", err);
     }

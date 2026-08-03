@@ -225,6 +225,17 @@
     </div>
   </dialog>
 
+  <!-- Stale session dialog -->
+  <dialog id="stale-session-dialog" class="book-dialog confirm-dialog">
+    <h3 class="confirm-dialog-title">Stopwatch still running</h3>
+    <p id="stale-session-message"></p>
+    <div class="dialog-actions">
+      <button type="button" id="stale-session-save" class="btn-secondary">Save interval</button>
+      <button type="button" id="stale-session-discard" class="btn-secondary">Discard</button>
+      <button type="button" id="stale-session-continue" class="btn-primary">Continue</button>
+    </div>
+  </dialog>
+
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

@@ -5,6 +5,7 @@ class AuthService {
   constructor() {
     this._user = null;
     this._isAuthenticated = false;
+    this._stopwatchStartTime = null;
   }
 
   get backendOrigin() {
@@ -27,16 +28,19 @@ class AuthService {
         const data = await response.json();
         this._user = data.user;
         this._isAuthenticated = true;
+        this._stopwatchStartTime = data.stopwatch_start_time ?? null;
         return true;
       } else {
         this._user = null;
         this._isAuthenticated = false;
+        this._stopwatchStartTime = null;
         return false;
       }
     } catch (error) {
       console.error('Auth check failed:', error);
       this._user = null;
       this._isAuthenticated = false;
+      this._stopwatchStartTime = null;
       return false;
     }
   }
@@ -102,6 +106,7 @@ class AuthService {
 
   get user() { return this._user; }
   get isAuthenticated() { return this._isAuthenticated; }
+  get stopwatchStartTime() { return this._stopwatchStartTime; }
 }
 
 export default new AuthService();
