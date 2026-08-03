@@ -54,6 +54,8 @@ export const requireAuthentication = async (req, res, next) => {
       email: loginSession.email_address
     }
 
+    req.stopwatchStartTime = loginSession.stopwatch_start_time ?? null;
+
     infoLog(req, startTime, `Valid session for user: ${loginSession.email_address}.`);
     next();
   } catch (error) {

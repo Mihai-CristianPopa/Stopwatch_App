@@ -20,7 +20,8 @@ router.get("/me", requireAuthentication, (req, res) => {
   updateLoginSession(req.sid, new Date().toISOString());
   return res.status(200).json({
       message: "User authenticated successfully.",
-      user: req.user
+      user: req.user,
+      stopwatch_start_time: req.stopwatchStartTime
     });
 });
 

@@ -79,7 +79,8 @@ export const loginController = async (req, res) => {
       user: {
         id: existingUser._id,
         email: existingUser.email_address
-      }
+      },
+      stopwatch_start_time: existingSession?.stopwatch_start_time ?? null
     })
 
   } catch(error) {
