@@ -49,39 +49,34 @@ export const loginController = async (req, res) => {
     const curentClearingIndexExpirationTimeInSeconds = await getClearingIndexExpireAfterSeconds(DB_KEYS.AUTH_DB, DB_KEYS.SESSIONS_COLLECTION, DB_KEYS.TTL_FIELD);
     if (curentClearingIndexExpirationTimeInSeconds !== sessionExpirationTimeInMiliseconds / 1000) await setClearingIndexForSessionCookies();
 
-    const login_time = new Date().toISOString();
+    console.log('looking up session for user_id:', existingUser._id, typeof existingUser._id);
+    const existingParentSession = await getUserLoginSession(existingUser._id);
+    console.log('found session:', existingParentSession);
 
-    // Resolve or create parent session
-    let parentSession = await getUserLoginSession(existingUser._id);
-    if (!parentSession) {
-      try {
-        const sessionData = await createLoginSession({
-          user_id: existingUser._id,
-          email_address: existingUser.email_address,
-          login_time,
-          last_login_time: login_time
-        });
-        parentSession = { _id: sessionData.insertedId };
-        infoLog(req, startTime, INFO_MESSAGE.LOGIN_SESSION_CREATED(sessionData.insertedId.toString(), email));
-      } catch (err) {
-        if (err.code === 11000) {
-          // Race condition: another login created the parent session just now
-          parentSession = await getUserLoginSession(existingUser._id);
-        } else {
-          throw err;
-        }
-      }
+    const login_time = new Date().toISOString();
+    let parentCookieId;
+
+    if (!existingParentSession) {
+      const sessionData = await createLoginSession({
+        user_id: existingUser._id,
+        email_address: existingUser.email_address,
+        login_time,
+        last_login_time: login_time
+      });
+      parentCookieId = sessionData.insertedId.toString();
+      infoLog(req, startTime, INFO_MESSAGE.LOGIN_SESSION_CREATED(parentCookieId, email));
     } else {
-      const properlyUpdatedSession = await updateLoginSession(parentSession._id, login_time);
+      const properlyUpdatedSession = await updateLoginSession(existingParentSession._id, login_time);
       if (!properlyUpdatedSession) {
-        warnLog(req, startTime, `Session with id ${parentSession._id.toString()} did not get its last login time updated for ${email}`);
+        warnLog(req, startTime, `Session with id ${existingParentSession._id.toString()} did not get its last login time updated for ${email}`);
       }
-      infoLog(req, startTime, `Session with id ${parentSession._id.toString()} was reused for ${email}`);
+      infoLog(req, startTime, `Session with id ${existingParentSession._id.toString()} was reused for ${email}`);
+      parentCookieId = existingParentSession._id.toString();
     }
 
     // Always create a new device session for this browser
     const deviceSessionData = await createDeviceSession({
-      session_id: parentSession._id,
+      session_id: parentCookieId,
       last_login_time: login_time
     });
 
@@ -95,7 +90,7 @@ export const loginController = async (req, res) => {
         id: existingUser._id,
         email: existingUser.email_address
       },
-      stopwatch_start_time: parentSession.stopwatch_start_time ?? null
+      stopwatch_start_time: existingParentSession?.stopwatch_start_time ?? null
     });
 
   } catch(error) {
