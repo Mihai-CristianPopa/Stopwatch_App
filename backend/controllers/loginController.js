@@ -3,7 +3,7 @@ import logger from "../logger.js";
 import { errorObj, warnLog, infoLog } from "../loggerHelper.js";
 import { ERROR_OBJECTS, INFO_MESSAGE, loginErrorMessageWrongCredentialsFrontendFacing, DB_KEYS } from "../utils/constants.js";
 import { getUserByEmail } from "../services/userService.js";
-import { createLoginSession, getUserLoginSession, updateLoginSession } from "../services/sessionService.js";
+import { createLoginSession, getUserLoginSession, updateLoginSession, createDeviceSession } from "../services/sessionService.js";
 import { setSessionCookie, createLoginSessionClearingIndex, sessionExpirationTimeInMiliseconds } from "../utils/sessionCookieHandling.js";
 import { getClearingIndexExpireAfterSeconds } from "../services/commonService.js"
 
@@ -11,15 +11,16 @@ export const loginController = async (req, res) => {
   const startTime = Date.now();
   const { email, password } = req.body;
   const METHOD_FAILURE_MESSAGE = "loginController failed.";
+
   function handleLoginError(err, frontendMessage=null) {
-      logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
-      if (frontendMessage) err.message = frontendMessage;
-      return res.status(err.statusCode).json(err);
+    logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
+    if (frontendMessage) err.message = frontendMessage;
+    return res.status(err.statusCode).json(err);
   }
 
   /** Needs to be executed only once, or in case something the storing time of the cookies changes. */
   async function setClearingIndexForSessionCookies() {
-    const sessionClearingIndex =  await createLoginSessionClearingIndex();
+    const sessionClearingIndex = await createLoginSessionClearingIndex();
     if (!sessionClearingIndex) {
       warnLog(req, startTime, "TTL for creating the login sessions failed to be created");
     }
@@ -48,30 +49,44 @@ export const loginController = async (req, res) => {
     const curentClearingIndexExpirationTimeInSeconds = await getClearingIndexExpireAfterSeconds(DB_KEYS.AUTH_DB, DB_KEYS.SESSIONS_COLLECTION, DB_KEYS.TTL_FIELD);
     if (curentClearingIndexExpirationTimeInSeconds !== sessionExpirationTimeInMiliseconds / 1000) await setClearingIndexForSessionCookies();
 
-
-    const existingSession = await getUserLoginSession(existingUser._id);
     const login_time = new Date().toISOString();
-    let cookieIdToPass;
 
-    if (!existingSession) {
-      const sessionData = await createLoginSession({
-        user_id: existingUser._id,
-        email_address: existingUser.email_address,
-        login_time,
-        last_login_time: login_time
-      });
-      cookieIdToPass = sessionData.insertedId.toString();
-      infoLog(req, startTime, INFO_MESSAGE.LOGIN_SESSION_CREATED(cookieIdToPass, email));
-    } else {
-      // update existing session last login time
-      const properlyUpdatedSession = await updateLoginSession(existingSession._id, login_time)
-      if (!properlyUpdatedSession) {
-        warnLog(req, startTime, `Session with id ${existingSession._id.toString()} did not get it's last login time updated for ${email}`);
+    // Resolve or create parent session
+    let parentSession = await getUserLoginSession(existingUser._id);
+    if (!parentSession) {
+      try {
+        const sessionData = await createLoginSession({
+          user_id: existingUser._id,
+          email_address: existingUser.email_address,
+          login_time,
+          last_login_time: login_time
+        });
+        parentSession = { _id: sessionData.insertedId };
+        infoLog(req, startTime, INFO_MESSAGE.LOGIN_SESSION_CREATED(sessionData.insertedId.toString(), email));
+      } catch (err) {
+        if (err.code === 11000) {
+          // Race condition: another login created the parent session just now
+          parentSession = await getUserLoginSession(existingUser._id);
+        } else {
+          throw err;
+        }
       }
-      infoLog(req, startTime, `Session with id ${existingSession._id.toString()} was reused for ${email}`);
-      cookieIdToPass = existingSession._id.toString();
+    } else {
+      const properlyUpdatedSession = await updateLoginSession(parentSession._id, login_time);
+      if (!properlyUpdatedSession) {
+        warnLog(req, startTime, `Session with id ${parentSession._id.toString()} did not get its last login time updated for ${email}`);
+      }
+      infoLog(req, startTime, `Session with id ${parentSession._id.toString()} was reused for ${email}`);
     }
-    setSessionCookie(res, cookieIdToPass);
+
+    // Always create a new device session for this browser
+    const deviceSessionData = await createDeviceSession({
+      session_id: parentSession._id,
+      last_login_time: login_time
+    });
+
+    infoLog(req, startTime, `Device session ${deviceSessionData.insertedId.toString()} created for ${email}`);
+    setSessionCookie(res, deviceSessionData.insertedId.toString());
 
     infoLog(req, startTime, INFO_MESSAGE.USER_LOGGED_IN(email));
     return res.status(200).json({
@@ -80,13 +95,11 @@ export const loginController = async (req, res) => {
         id: existingUser._id,
         email: existingUser.email_address
       },
-      stopwatch_start_time: existingSession?.stopwatch_start_time ?? null
-    })
+      stopwatch_start_time: parentSession.stopwatch_start_time ?? null
+    });
 
   } catch(error) {
     logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, error));
     return res.status(500).json(ERROR_OBJECTS.FRONTEND_INTERNAL_SERVER_ERROR);
   }
-
-
 };

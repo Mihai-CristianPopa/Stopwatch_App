@@ -2,61 +2,67 @@ import { ObjectId } from "mongodb";
 import logger from "../logger.js";
 import { warnLog, infoLog, errorObj } from "../loggerHelper.js";
 import { getSessionId, clearSessionCookie, isSessionExpired } from "../utils/sessionCookieHandling.js";
-import { deleteLoginSession, getLoginSession } from "../services/sessionService.js";
+import { getDeviceSession, deleteDeviceSession, getLoginSession } from "../services/sessionService.js";
 import { ERROR_OBJECTS } from "../utils/constants.js";
 
 export const requireAuthentication = async (req, res, next) => {
   const startTime = Date.now();
   const METHOD_FAILURE_MESSAGE = "requireAuthentication middleware failed.";
 
-  async function handleAuthError(err, sessionId, removeCookie = true) {
-      logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
-      if (removeCookie === true && sessionId) {
-        await deleteCookieFromDb(sessionId);
-        clearSessionCookie(res);
-      }
-      return res.status(err.statusCode).json(err);
+  async function invalidateDeviceSession(deviceSessionId) {
+    try {
+      await deleteDeviceSession(deviceSessionId);
+      infoLog(req, startTime, `Device session ${deviceSessionId} invalidated`);
+    } catch {
+      warnLog(req, startTime, `Failed to delete device session ${deviceSessionId} during invalidation`);
+    }
+    clearSessionCookie(res);
   }
 
-  async function deleteCookieFromDb(sessionId) {
-    const sessionDeleted = await deleteLoginSession(sessionId);
-    if (sessionDeleted.deletedCount !== 0) {
-      infoLog(req, startTime, `Session ${sessionId} deleted successfully`);
-    } else {
-      warnLog(req, startTime, `Deletion of the expired session: ${sessionId} failed`);
-    }
+  function handleAuthError(err, statusCode) {
+    logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
+    return res.status(statusCode ?? err.statusCode).json(err);
   }
 
   try {
-    const sessionId = getSessionId(req);
+    const deviceSessionId = getSessionId(req);
 
-    if (!sessionId) {
-      return handleAuthError(ERROR_OBJECTS.NO_COOKIE_FOUND(), sessionId, false);
+    if (!deviceSessionId) {
+      return handleAuthError(ERROR_OBJECTS.NO_COOKIE_FOUND());
     }
 
-    if (!ObjectId.isValid(sessionId)) {
-      return handleAuthError(ERROR_OBJECTS.INVALID_SESSION_ID(), sessionId);
+    if (!ObjectId.isValid(deviceSessionId)) {
+      return handleAuthError(ERROR_OBJECTS.INVALID_SESSION_ID());
     }
 
-    const loginSession = await getLoginSession(sessionId);
-    if (!loginSession) {
-      return handleAuthError(ERROR_OBJECTS.SESSION_NOT_FOUND(), sessionId);
+    const deviceSession = await getDeviceSession(deviceSessionId);
+    if (!deviceSession) {
+      clearSessionCookie(res);
+      return handleAuthError(ERROR_OBJECTS.SESSION_NOT_FOUND());
     }
 
-    if (!loginSession.last_login_time || isSessionExpired(loginSession.last_login_time)) {
-      return handleAuthError(ERROR_OBJECTS.SESSION_EXPIRED(), sessionId, true);
+    const parentSession = await getLoginSession(deviceSession.session_id.toString());
+    if (!parentSession) {
+      await invalidateDeviceSession(deviceSessionId);
+      return handleAuthError(ERROR_OBJECTS.SESSION_NOT_FOUND());
     }
 
-    req.sid = sessionId;
+    if (!parentSession.last_login_time || isSessionExpired(parentSession.last_login_time)) {
+      await invalidateDeviceSession(deviceSessionId);
+      return handleAuthError(ERROR_OBJECTS.SESSION_EXPIRED());
+    }
+
+    req.sid = deviceSessionId;
+    req.parentSid = parentSession._id.toString();
 
     req.user = {
-      id: loginSession.user_id,
-      email: loginSession.email_address
-    }
+      id: parentSession.user_id,
+      email: parentSession.email_address
+    };
 
-    req.stopwatchStartTime = loginSession.stopwatch_start_time ?? null;
+    req.stopwatchStartTime = parentSession.stopwatch_start_time ?? null;
 
-    infoLog(req, startTime, `Valid session for user: ${loginSession.email_address}.`);
+    infoLog(req, startTime, `Valid session for user: ${parentSession.email_address}.`);
     next();
   } catch (error) {
     logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, error));

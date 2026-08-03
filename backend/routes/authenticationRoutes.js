@@ -17,7 +17,7 @@ router.post("/login", loginController);
 router.post("/register", registerController);
 
 router.get("/me", requireAuthentication, (req, res) => {
-  updateLoginSession(req.sid, new Date().toISOString());
+  updateLoginSession(req.parentSid, new Date().toISOString());
   return res.status(200).json({
       message: "User authenticated successfully.",
       user: req.user,
