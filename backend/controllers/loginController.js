@@ -49,10 +49,7 @@ export const loginController = async (req, res) => {
     const curentClearingIndexExpirationTimeInSeconds = await getClearingIndexExpireAfterSeconds(DB_KEYS.AUTH_DB, DB_KEYS.SESSIONS_COLLECTION, DB_KEYS.TTL_FIELD);
     if (curentClearingIndexExpirationTimeInSeconds !== sessionExpirationTimeInMiliseconds / 1000) await setClearingIndexForSessionCookies();
 
-    console.log('looking up session for user_id:', existingUser._id, typeof existingUser._id);
     const existingParentSession = await getUserLoginSession(existingUser._id);
-    console.log('found session:', existingParentSession);
-
     const login_time = new Date().toISOString();
     let parentCookieId;
 

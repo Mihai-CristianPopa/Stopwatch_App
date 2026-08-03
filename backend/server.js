@@ -79,7 +79,7 @@ async function startServer() {
     try {
       await ensureIndexes();
       await ensureBookIndexes();
-      await ensureSessionIndexes();
+      // await ensureSessionIndexes();
     } catch (err) {
       logger.error("Failed to ensure indexes on startup", err);
     }
