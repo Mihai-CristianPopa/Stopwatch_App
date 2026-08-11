@@ -124,12 +124,25 @@ async function postInterval(payload) {
   return response.ok;
 }
 
-function updateSessionStopwatchState(startTime, durationMs) {
+function syncStopwatchStarted(startTime) {
+  updateSessionStopwatchState({ start_time: startTime ?? null })
+}
+
+/**
+ * If this is called without the durationMs parameter, it means that we do not want to update
+ * the local total.
+ * @param {*} durationMs 
+ */
+function syncStopwatchStopped(durationMs) {
+  updateSessionStopwatchState({ start_time: null, duration_ms: durationMs ?? null })
+}
+
+function updateSessionStopwatchState(body) {
   fetch(`${getBackendOrigin()}/session/stopwatch-state`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ start_time: startTime ?? null, duration_ms: durationMs ?? null })
+    body: JSON.stringify(body)
   }).catch(() => {});
 }
 
@@ -158,13 +171,13 @@ function showStaleSessionDialog(startTime) {
     } else {
       showToast('Could not save — try again later.');
     }
-    updateSessionStopwatchState(null, durationMs);
+    syncStopwatchStopped(durationMs);
     enterIdleState();
   };
 
   document.getElementById('stale-session-discard').onclick = () => {
     dialog.close();
-    updateSessionStopwatchState(null);
+    syncStopwatchStopped(null);
     enterIdleState();
   };
 
@@ -210,7 +223,7 @@ export function initStopwatch(sessionStopwatchStartTime) {
 
   startBtn.addEventListener('click', () => {
     const startTime = Date.now();
-    updateSessionStopwatchState(new Date(startTime).toISOString());
+    syncStopwatchStarted(new Date(startTime).toISOString());
     enterRunningState(startTime);
   });
 
@@ -239,7 +252,7 @@ export function initStopwatch(sessionStopwatchStartTime) {
     try {
       const [ok] = await Promise.all([
         postInterval(payload),
-        updateSessionStopwatchState(null, durationMs)
+        syncStopwatchStopped(durationMs)
       ]);
       if (ok) {
         showToast(`Saved ${formatDurationHuman(durationMs)}`);
