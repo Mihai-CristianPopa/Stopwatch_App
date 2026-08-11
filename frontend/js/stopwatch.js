@@ -70,6 +70,10 @@ function tick(startTime) {
 }
 
 function enterRunningState(startTime, tzOffset) {
+  // We have added Server-Side Events, due to this the method will be called twice
+  // in the tab where the stopwatch is started once from the click handler and another from the
+  // SSE handler
+  if (activeStartTime) return;
   activeStartTime = startTime;
   activeStartTzOffset = tzOffset ?? new Date().getTimezoneOffset();
   getStartBtn().hidden = true;
@@ -80,6 +84,8 @@ function enterRunningState(startTime, tzOffset) {
 }
 
 function enterIdleState() {
+  // Same story as for enterRunningState method
+  if (!activeStartTime) return;
   activeStartTime = null;
   activeStartTzOffset = null;
   clearInterval(tickTimer);
@@ -118,12 +124,12 @@ async function postInterval(payload) {
   return response.ok;
 }
 
-function updateSessionStopwatchState(startTime) {
+function updateSessionStopwatchState(startTime, durationMs) {
   fetch(`${getBackendOrigin()}/session/stopwatch-state`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ start_time: startTime ?? null })
+    body: JSON.stringify({ start_time: startTime ?? null, duration_ms: durationMs ?? null })
   }).catch(() => {});
 }
 
@@ -152,7 +158,7 @@ function showStaleSessionDialog(startTime) {
     } else {
       showToast('Could not save — try again later.');
     }
-    updateSessionStopwatchState(null);
+    updateSessionStopwatchState(null, durationMs);
     enterIdleState();
   };
 
@@ -233,7 +239,7 @@ export function initStopwatch(sessionStopwatchStartTime) {
     try {
       const [ok] = await Promise.all([
         postInterval(payload),
-        updateSessionStopwatchState(null)
+        updateSessionStopwatchState(null, durationMs)
       ]);
       if (ok) {
         showToast(`Saved ${formatDurationHuman(durationMs)}`);
@@ -251,4 +257,21 @@ export function initStopwatch(sessionStopwatchStartTime) {
       showToast(`Saved locally — will sync when back online.`);
     }
   });
+}
+
+export function onStopwatchEvent(payload) {
+  if (payload.startTime) {
+    // We have added Server-Side Events, due to this the method will be called twice
+    // in the tab where the stopwatch is started once from the click handler and another from the
+    // SSE handler
+    if (activeStartTime) return;
+    enterRunningState(new Date(payload.startTime).getTime())
+  } else {
+    if (!activeStartTime) return;
+    if (payload.durationMs) {
+      addTodayTotalMs(payload.durationMs)
+      renderTodayTotal()
+    }
+    enterIdleState()
+  }
 }

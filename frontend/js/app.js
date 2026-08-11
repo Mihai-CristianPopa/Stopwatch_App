@@ -1,9 +1,9 @@
 import authService from './authService.js';
 import AuthUI from './authUI.js';
-import { initStopwatch, fetchTodayTotal, flushPendingQueue } from './stopwatch.js';
+import { initStopwatch, fetchTodayTotal, flushPendingQueue, onStopwatchEvent } from './stopwatch.js';
 import { initHistoryControls, rerenderActiveRange } from './dailyTotalsView.js';
 import { initLibrary, showLibrary } from './libraryView.js';
-import { resolveBackendOrigin, setBackendOrigin } from './checkBackend.js';
+import { resolveBackendOrigin, setBackendOrigin, getBackendOrigin } from './checkBackend.js';
 import { setActiveTabBtn } from "./common.js";
 
 const views = {
@@ -60,6 +60,16 @@ function onUserReady(justLoggedIn = false) {
   flushPendingQueue();
   initHistoryControls();
   initLibrary();
+  initSSE();
+}
+
+function initSSE() {
+  const evtSource = new EventSource(`${getBackendOrigin()}/session/events`, { withCredentials: true })
+
+  evtSource.onmessage = (event) => {
+    const { type, payload } = JSON.parse(event.data)
+    if (type === 'stopwatch') onStopwatchEvent(payload)
+  }
 }
 
 // Init auth UI — delegates login/register/logout handling
