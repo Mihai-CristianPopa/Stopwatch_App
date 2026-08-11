@@ -25,6 +25,12 @@ export function getUserLoginSession(userId) {
   return collection.findOne({ user_id: new ObjectId(userId) });
 }
 
+/**
+ * Deprecated
+ * @param {*} sessionId 
+ * @param {*} startTime 
+ * @returns 
+ */
 export function updateSessionStopwatchStartTime(sessionId, startTime) {
   const db = client.db("stopwatch_auth");
   const collection = db.collection("sessions");
@@ -32,6 +38,24 @@ export function updateSessionStopwatchStartTime(sessionId, startTime) {
     ? { $set: { stopwatch_start_time: startTime } }
     : { $unset: { stopwatch_start_time: "" } };
   return collection.updateOne({ _id: new ObjectId(sessionId) }, update);
+}
+
+export function startSessionStopwatch(sessionId, startTime) {
+  const db = client.db("stopwatch_auth");
+  const collection = db.collection("sessions");
+  return collection.updateOne(
+    { _id: new ObjectId(sessionId), stopwatch_start_time: { $exists: false } },
+    { $set: { stopwatch_start_time: startTime } }
+  );
+}
+
+export function stopSessionStopwatch(sessionId) {
+  const db = client.db("stopwatch_auth");
+  const collection = db.collection("sessions");
+  return collection.updateOne(
+    { _id: new ObjectId(sessionId) },
+    { $unset: { stopwatch_start_time: "" } }
+  );
 }
 
 export function updateLoginSession(sessionId, lastLoginTime) {
