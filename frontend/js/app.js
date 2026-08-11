@@ -2,7 +2,7 @@ import authService from './authService.js';
 import AuthUI from './authUI.js';
 import { initStopwatch, fetchTodayTotal, flushPendingQueue, onStopwatchEvent } from './stopwatch.js';
 import { initHistoryControls, rerenderActiveRange } from './dailyTotalsView.js';
-import { initLibrary, showLibrary } from './libraryView.js';
+import { initLibrary, showLibrary, onLibraryEvent } from './libraryView.js';
 import { resolveBackendOrigin, setBackendOrigin, getBackendOrigin } from './checkBackend.js';
 import { setActiveTabBtn } from "./common.js";
 
@@ -68,7 +68,8 @@ function initSSE() {
 
   evtSource.onmessage = (event) => {
     const { type, payload } = JSON.parse(event.data)
-    if (type === 'stopwatch') onStopwatchEvent(payload)
+    if (type === 'stopwatch') onStopwatchEvent(payload);
+    if (type === 'library') onLibraryEvent();
   }
 }
 

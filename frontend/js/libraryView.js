@@ -655,3 +655,7 @@ export function showLibrary() {
   setActiveTabBtn(getActiveTab());
   loadBooks(getActiveTab());
 }
+
+export function onLibraryEvent() {
+  loadBooks(getActiveTab());
+}
