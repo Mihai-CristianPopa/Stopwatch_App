@@ -3,6 +3,7 @@ import logger from "../logger.js";
 import { errorObj, infoLog } from "../loggerHelper.js";
 import { ERROR_OBJECTS } from "../utils/constants.js";
 import { updateBook, getBookById, getMinSortOrder } from "../services/bookService.js";
+import { broadcast } from '../sse.js';
 
 const VALID_STATUSES = ["wishlist", "read"];
 const MAX_STRING_LEN = 300;
@@ -120,6 +121,8 @@ export const updateBookController = async (req, res) => {
     }
 
     const book = { ...result, _id: result._id.toString(), user_id: result.user_id.toString() };
+
+    broadcast(userId.toString(), 'library', {});
 
     infoLog(req, startTime, `Book ${id} updated for user ${req.user.email}`);
     return res.status(200).json(book);

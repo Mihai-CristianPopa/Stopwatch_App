@@ -3,6 +3,7 @@ import logger from "../logger.js";
 import { errorObj, infoLog } from "../loggerHelper.js";
 import { ERROR_OBJECTS } from "../utils/constants.js";
 import { createBook, getMinSortOrder } from "../services/bookService.js";
+import { broadcast } from '../sse.js'
 
 const MAX_STRING_LEN = 300;
 const VALID_STATUSES = ["wishlist", "read"];
@@ -86,6 +87,8 @@ export const createBookController = async (req, res) => {
     };
 
     const result = await createBook(doc);
+
+    broadcast(userId.toString(), 'library', {});
 
     infoLog(req, startTime, `Book created for user ${req.user.email} (status=${resolvedStatus})`);
     return res.status(201).json({ ...doc, _id: result.insertedId });

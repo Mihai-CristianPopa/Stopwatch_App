@@ -3,6 +3,7 @@ import logger from "../logger.js";
 import { errorObj, infoLog } from "../loggerHelper.js";
 import { ERROR_OBJECTS } from "../utils/constants.js";
 import { bulkReorder } from "../services/bookService.js";
+import { broadcast } from '../sse.js'
 
 const VALID_STATUSES = ["wishlist", "read"];
 
@@ -32,6 +33,8 @@ export const reorderBooksController = async (req, res) => {
   try {
     const userId = new ObjectId(req.user.id);
     const result = await bulkReorder(userId, status, ids);
+
+    broadcast(userId.toString(), 'library', {});
 
     infoLog(req, startTime, `Books reordered for user ${req.user.email} (status=${status}, count=${ids.length})`);
     return res.status(200).json({ updated: result.modifiedCount });
