@@ -17,6 +17,9 @@ export const sendEmailController = async (req, res) => {
             return res.status(500).json(ERROR_OBJECTS.FRONTEND_INTERNAL_SERVER_ERROR);
         }
         infoLog(req, startTime, INFO_MESSAGE.USER_REGISTERED(res.locals.newUser.email));
+        // just for testing purposes
+        res.header("userId", res.locals.newUser.userId);
+        res.header("token", res.locals.newUser.token);
         res.status(201).json({
             message: INFO_MESSAGE.USER_REGISTERED(res.locals.newUser.email)
         });

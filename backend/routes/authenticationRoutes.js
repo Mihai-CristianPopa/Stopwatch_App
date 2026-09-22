@@ -2,6 +2,7 @@ import express from "express";
 import { registerController } from "../controllers/registerController.js";
 import { loginController } from "../controllers/loginController.js";
 import { logoutController } from "../controllers/logoutController.js";
+import { sendEmailController } from "../controllers/sendEmailController.js";
 import { requireAuthentication } from "../middleware/authMiddleware.js";
 import { checkDatabaseForAuth } from "../middleware/dbIsUpMiddleware.js";
 import { updateLoginSession } from "../services/sessionService.js";
@@ -16,11 +17,11 @@ router.post("/logout", logoutController);
 
 router.post("/login", loginController);
 
-router.post("/register", registerController);
+router.post("/register", registerController, sendEmailController);
 
-router.post("/delete-user", deleteUserController);
+router.delete("/delete-user", deleteUserController);
 
-router.post("/email-confirmation", emailConfirmationController);
+router.get("/email-confirmation", emailConfirmationController);
 
 router.get("/me", requireAuthentication, (req, res) => {
   updateLoginSession(req.parentSid, new Date().toISOString());

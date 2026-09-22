@@ -1,0 +1,21 @@
+# First make sure to delete the user
+DELETE http://localhost:7000/authentication/delete-user?email=michaelscott%40proton.me HTTP/1.1
+content-type: application/json
+
+###
+# @name register
+POST http://localhost:7000/authentication/register HTTP/1.1
+content-type: application/json
+
+{
+    "email": "michaelscott@proton.me",
+    "password": "davidWallaceIsAFool"
+}
+
+### 2. Extract session ID from login response cookies
+@userId = {{register.response.headers.userId}}
+@token = {{register.response.headers.token}}
+
+### 3. Use session for checking whether the user is logged in or not
+GET http://localhost:7000/authentication/email-confirmation?userId={{userId}}&token={{token}} HTTP/1.1
+content-type: application/json
