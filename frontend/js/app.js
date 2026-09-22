@@ -6,6 +6,9 @@ import { initLibrary, showLibrary } from './libraryView.js';
 import { resolveBackendOrigin, setBackendOrigin } from './checkBackend.js';
 import { setActiveTabBtn } from "./common.js";
 
+const params = new URLSearchParams(window.location.search);
+const verifiedEmail = params.get('email');
+
 const views = {
   loading: document.getElementById('loading-view'),
   auth: document.getElementById('auth-view'),
@@ -38,7 +41,10 @@ function showApp(user) {
   showView('stopwatch');
 }
 
-function showAuth() {
+function showAuth(optionalVerifiedEmail) {
+  if (optionalVerifiedEmail) {
+    document.getElementById('login-email').value = optionalVerifiedEmail;
+  }
   document.getElementById('app-header').hidden = true;
   showView('auth');
 }
@@ -81,6 +87,6 @@ new AuthUI({
     showApp(authService.user);
     onUserReady();
   } else {
-    showAuth();
+    showAuth(verifiedEmail);
   }
 })();
