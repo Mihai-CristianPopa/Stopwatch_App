@@ -1,5 +1,11 @@
 export const registrationErrorMessageUserWithEmailExists = (email) => `Registration failed because there already exists an user with email address ${email}.`;
 
+export const userActivationFailed = (email) => `User activation failed for email ${email}.`;
+
+export const emailConfirmationErrorMessageUserDoesNotExist = (userId) => `Email confirmation failed because the user with id ${userId} does not exist.`;
+
+export const emailConfirmationErrorMessageUserAlreadyVerified = (userId) => `Email confirmation failed because the user with id ${userId} is already verified.`;
+
 export const loginErrorMessageNoUserFoundForTheEmail = (email) => `Login failed because there is no user with the email address ${email}`;
 
 export const loginErrorMessageWrongPassword = (email) => `Login failed due to the fact that the introduced password is wrong for the user with email address ${email}`;
@@ -13,6 +19,7 @@ const STANDARD_UNAUTH_COOKIE_OBJ = {
 
 export const INFO_MESSAGE = {
   USER_REGISTERED: (email) => `User ${email} registered and successfully received an email confirmation.`,
+  USER_ACTIVATED: (email) => `User ${email} registered and successfully activated his account.`,
   LOGIN_SESSION_CREATED: (sessionId, email) => `Login session with id ${sessionId} has been created for user with email address ${email}`,
   USER_LOGGED_IN: (email) => `User with email ${email} has been logged in.`,
   USER_LOGGED_OUT: "User was logged out successfully.",
@@ -33,6 +40,18 @@ export const ERROR_OBJECTS = {
         details: details || "start_time must be before end_time and all fields must be valid."
       };
     },
+    INVALID_TOKEN: () => {
+      return {
+        statusCode: 400,
+        message: "Invalid confirmation token.",
+      };
+    },
+    EXPIRED_TOKEN: () => {
+      return {
+        statusCode: 400,
+        message: "Expired confirmation token.",
+      };
+    },
     INTERVAL_TOO_LONG: () => {
       return {
         statusCode: 400,
@@ -43,6 +62,24 @@ export const ERROR_OBJECTS = {
       return {
         statusCode: 400,
         message: registrationErrorMessageUserWithEmailExists(email)
+      };
+    },
+    USER_ACTIVATION_FAILED: (email) => {
+      return {
+        statusCode: 400,
+        message: userActivationFailed(email)
+      };
+    },
+    USER_ALREADY_VERIFIED: (email) => {
+      return {
+        statusCode: 400,
+        message: emailConfirmationErrorMessageUserAlreadyVerified(email)
+      };
+    },
+    USER_DOES_NOT_EXIST: (userId) => {
+      return {
+        statusCode: 400,
+        message: emailConfirmationErrorMessageUserDoesNotExist(userId)
       };
     },
     NO_COOKIE_FOUND: () => {

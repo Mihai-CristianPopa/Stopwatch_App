@@ -7,23 +7,18 @@ export const sendMail = async (receiver) => {
     const email = emailConfirmationHtml(confirmationUrl);
 
     const transporter = createTransport({
-        service: "Mailgun", // Use any Service ID from the table below (matching is case-insensitive)
+        service: config.emailService, // Use any Service ID from the table below (matching is case-insensitive)
         auth: {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
         },
     }); 
 
-    // const receiver = "mihaipopa00@gmail.com"
-    
-// postmaster@sandboxfc10e6a9fc394c2087aabb9cfbf05029.mailgun.org
     const info = await transporter.sendMail({
-        from: 'postmaster@sandboxfc10e6a9fc394c2087aabb9cfbf05029.mailgun.org', // sender address
+        from: `Stopwatch Tracker <no-reply@${config.emailSendingDomain}>`, // sender address
         to: receiver.email, // list of recipients
-        subject: "Hello with html", // subject line
-        // text: "Hello world test?", // plain text body
+        subject: "Confirm your Stopwatch Tracker account", // subject line
         html: email, // HTML body
     });
-    console.log("Message sent:", info.messageId);
     return info;
 }

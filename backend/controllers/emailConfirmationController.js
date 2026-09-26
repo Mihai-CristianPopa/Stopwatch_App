@@ -30,13 +30,13 @@ export const emailConfirmationController = async (req, res) => {
     if(!user){
       // Update error message to show that the user does not exist
       // at this point the user should exist but not be verified
-      err = ERROR_OBJECTS.BAD_REQUEST("userId");
+      err = ERROR_OBJECTS.USER_DOES_NOT_EXIST(userId);
       logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
       return res.status(err.statusCode).json(err); 
     }
     if (user.isVerified) {
       // user was previously verified, not okay
-      err = ERROR_OBJECTS.BAD_REQUEST("userId");
+      err = ERROR_OBJECTS.USER_ALREADY_VERIFIED(user.email_address);
       logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
       return res.status(err.statusCode).json(err); 
     }
@@ -45,14 +45,14 @@ export const emailConfirmationController = async (req, res) => {
 
     if (user.emailVerificationToken !== confirmationTokenHash) {
       // token is wrong
-      err = ERROR_OBJECTS.BAD_REQUEST("userId");
+      err = ERROR_OBJECTS.INVALID_TOKEN();
       logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
       return res.status(err.statusCode).json(err);
     }
 
     if (user.emailVerificationExpiresAt < new Date()) {
       // token is expired
-      err = ERROR_OBJECTS.BAD_REQUEST("userId");
+      err = ERROR_OBJECTS.EXPIRED_TOKEN();
       logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
       return res.status(err.statusCode).json(err);
     }
@@ -61,12 +61,12 @@ export const emailConfirmationController = async (req, res) => {
 
     if (!activatedUser || !activatedUser.acknowledged){
       // user was not properly activated
-      err = ERROR_OBJECTS.BAD_REQUEST("userId");
+      err = ERROR_OBJECTS.USER_ACTIVATION_FAILED(user.email_address);
       logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
       return res.status(err.statusCode).json(err); 
     };
 
-    infoLog(req, startTime, INFO_MESSAGE.USER_REGISTERED(user.email_address));
+    infoLog(req, startTime, INFO_MESSAGE.USER_ACTIVATED(user.email_address));
     let baseUrl = config.isProduction ? "mihai-cristianpopa.github.io/Frontend_Stopwatch_App/" : "http://localhost:5500/frontend/index.html"
     baseUrl += `?email=${user.email_address}` 
     return res.redirect(baseUrl);
