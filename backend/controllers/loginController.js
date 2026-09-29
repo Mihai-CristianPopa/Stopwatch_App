@@ -45,6 +45,10 @@ export const loginController = async (req, res) => {
       return handleLoginError(ERROR_OBJECTS.WRONG_PASSWORD(email), loginErrorMessageWrongCredentialsFrontendFacing);
     }
 
+    if (!existingUser.isVerified) {
+      return handleLoginError(ERROR_OBJECTS.WRONG_PASSWORD(email), loginErrorMessageWrongCredentialsFrontendFacing);
+    }
+
     // Only reset the clearing index if the time to maintain the cookies in the db is different than the current TTL of the index
     const curentClearingIndexExpirationTimeInSeconds = await getClearingIndexExpireAfterSeconds(DB_KEYS.AUTH_DB, DB_KEYS.SESSIONS_COLLECTION, DB_KEYS.TTL_FIELD);
     if (curentClearingIndexExpirationTimeInSeconds !== sessionExpirationTimeInMiliseconds / 1000) await setClearingIndexForSessionCookies();
