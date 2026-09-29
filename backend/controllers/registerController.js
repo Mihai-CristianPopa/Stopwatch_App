@@ -37,7 +37,10 @@ export const registerController = async (req, res, next) => {
     const confirmationToken = await crypto.randomBytes(32).toString('hex');
     // Faster than bcrypt, not worth 
     const confirmationTokenHash = await crypto.createHash('sha256').update(confirmationToken).digest('hex');
-    const emailVerificationExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    
+    const confirmationTokenTimeBeforeExpiry = 60 * 60 * 1000; // 1 hour
+    const emailVerificationIssuedAt = new Date();
+    const emailVerificationExpiresAt = new Date(Date.now() + confirmationTokenTimeBeforeExpiry);
 
     const newUser = await registerUser({
       email_address: email,
@@ -45,6 +48,7 @@ export const registerController = async (req, res, next) => {
       created_at: new Date(),
       isVerified: false,
       emailVerificationToken: confirmationTokenHash,
+      emailVerificationIssuedAt,
       emailVerificationExpiresAt,
       date: new Date().toISOString().split('T')[0]
     });
