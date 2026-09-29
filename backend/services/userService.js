@@ -25,6 +25,12 @@ export function activateUser(userId) {
   return collection.updateOne({ _id: new ObjectId(userId) }, { $set: { isVerified: true,  emailVerificationToken: undefined, emailVerificationExpiresAt: undefined } });
 }
 
+export function invalidateConfirmationToken(userId) {
+  const db = client.db("stopwatch_auth");
+  const collection = db.collection("users");
+  return collection.updateOne({ _id: new ObjectId(userId) }, { $set: { isVerified: false,  emailVerificationToken: undefined, emailVerificationExpiresAt: undefined } });
+}
+
 export function deleteUser(emailAddress) {
   const db = client.db("stopwatch_auth");
   const collection = db.collection("users");

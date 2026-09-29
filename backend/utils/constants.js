@@ -10,6 +10,8 @@ export const loginErrorMessageNoUserFoundForTheEmail = (email) => `Login failed 
 
 export const loginErrorMessageWrongPassword = (email) => `Login failed due to the fact that the introduced password is wrong for the user with email address ${email}`;
 
+export const loginErrorMessageUserNotVerified = (email) => `Login failed due to the fact that the user with email address ${email} did not confirm his account.`;
+
 export const loginErrorMessageWrongCredentialsFrontendFacing = "Login failed due to invalid email or password";
 
 const STANDARD_UNAUTH_COOKIE_OBJ = {
@@ -44,6 +46,12 @@ export const ERROR_OBJECTS = {
       return {
         statusCode: 400,
         message: "Invalid confirmation token.",
+      };
+    },
+    TOKEN_IN_THE_FUTURE: () => {
+      return {
+        statusCode: 400,
+        message: "Confirmation token not yet available.",
       };
     },
     EXPIRED_TOKEN: () => {
@@ -109,6 +117,12 @@ export const ERROR_OBJECTS = {
       };
     },
     WRONG_PASSWORD: (email) => {
+      return {
+        statusCode: 401,
+        message: loginErrorMessageWrongPassword(email)
+      };
+    },
+    USER_NOT_VERIFIED: (email) => {
       return {
         statusCode: 401,
         message: loginErrorMessageWrongPassword(email)

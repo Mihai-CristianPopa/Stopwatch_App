@@ -1,7 +1,7 @@
 import logger from "../logger.js";
 import {errorObj, infoLog} from "../loggerHelper.js";
 import { ERROR_OBJECTS, INFO_MESSAGE } from "../utils/constants.js";
-import { activateUser, getUserById } from "../services/userService.js";
+import { activateUser, getUserById, invalidateConfirmationToken } from "../services/userService.js";
 import { config } from "../configs/config.js";
 import * as crypto from 'node:crypto';
 
@@ -38,6 +38,7 @@ export const emailConfirmationController = async (req, res) => {
       // user was previously verified, not okay
       err = ERROR_OBJECTS.USER_ALREADY_VERIFIED(user.email_address);
       logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
+      invalidateConfirmationToken(userId);
       return res.status(err.statusCode).json(err); 
     }
 
@@ -47,13 +48,24 @@ export const emailConfirmationController = async (req, res) => {
       // token is wrong
       err = ERROR_OBJECTS.INVALID_TOKEN();
       logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
+      invalidateConfirmationToken(userId);
       return res.status(err.statusCode).json(err);
     }
+
+    if (user.emailVerificationIssuedAt > new Date()) {
+      // token is expired
+      err = ERROR_OBJECTS.TOKEN_IN_THE_FUTURE();
+      logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
+      invalidateConfirmationToken(userId);
+      return res.status(err.statusCode).json(err);
+    }
+
 
     if (user.emailVerificationExpiresAt < new Date()) {
       // token is expired
       err = ERROR_OBJECTS.EXPIRED_TOKEN();
       logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
+      invalidateConfirmationToken(userId);
       return res.status(err.statusCode).json(err);
     }
 
@@ -67,12 +79,14 @@ export const emailConfirmationController = async (req, res) => {
     };
 
     infoLog(req, startTime, INFO_MESSAGE.USER_ACTIVATED(user.email_address));
-    let baseUrl = config.isProduction ? "mihai-cristianpopa.github.io/Frontend_Stopwatch_App/" : "http://localhost:5500/frontend/index.html"
-    baseUrl += `?email=${user.email_address}` 
-    return res.redirect(baseUrl);
+    const PROD_FRONTEND_BASE_URL = "mihai-cristianpopa.github.io/Frontend_Stopwatch_App/";
+    const LOCAL_FRONTEND_BASE_URL = "http://localhost:5500/frontend/index.html";
+    const redirectUrl = (config.isProduction ? PROD_FRONTEND_BASE_URL : LOCAL_FRONTEND_BASE_URL) + `?email=${user.email_address}` ;
+    return res.redirect(redirectUrl);
 
   } catch(error) {
     logger.error(`${METHOD_FAILURE_MESSAGE} for ${userId}`, errorObj(req, startTime, error));
+    invalidateConfirmationToken(userId);
     res.status(500).json(ERROR_OBJECTS.FRONTEND_INTERNAL_SERVER_ERROR);
   }
 
