@@ -2,7 +2,7 @@ import express from "express";
 import { registerController } from "../controllers/registerController.js";
 import { loginController } from "../controllers/loginController.js";
 import { logoutController } from "../controllers/logoutController.js";
-import { sendEmailController } from "../controllers/sendEmailController.js";
+import { sendEmailConfirmationController } from "../controllers/sendEmailController.js";
 import { requireAuthentication } from "../middleware/authMiddleware.js";
 import { checkDatabaseForAuth } from "../middleware/dbIsUpMiddleware.js";
 import { updateLoginSession } from "../services/sessionService.js";
@@ -17,7 +17,7 @@ router.post("/logout", logoutController);
 
 router.post("/login", loginController);
 
-router.post("/register", registerController, sendEmailController);
+router.post("/register", registerController, sendEmailConfirmationController);
 
 router.delete("/delete-user", deleteUserController);
 
