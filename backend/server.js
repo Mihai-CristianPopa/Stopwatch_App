@@ -11,7 +11,6 @@ import { ensureIndexes as ensureBookIndexes } from "./services/bookService.js";
 import { ensureSessionIndexes } from "./services/sessionService.js";
 import bookRoutes from "./routes/bookRoutes.js";
 import sessionRoutes from "./routes/sessionRoutes.js";
-import { sendMail } from "./services/mailService.js";
 
 const app = express();
 const port = config.port;
@@ -37,28 +36,6 @@ function setupRoutes() {
       timestamp: new Date().toISOString()
     });
   });
-
-  app.get("/send-mail", async(req, res) => {
-    try {
-      const info = await sendMail("mihaipopa00@gmail.com");
-      if (info.rejected.length > 0) {
-        return res.status(500).json({
-          statusCode: 500,
-          message: "Something went wrong for: " + info.rejected
-        });
-      }
-      return res.status(200).json({
-        statusCode: 200,
-        message: "Email successfully sent."
-      });
-    } catch (error) {
-        res.status(500).json({
-          statusCode: 500,
-          message: "Something went wrong"
-        });
-    }
-    
-  })
 }
 
 async function connectToDatabase() {
