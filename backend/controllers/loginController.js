@@ -45,8 +45,11 @@ export const loginController = async (req, res) => {
       return handleLoginError(ERROR_OBJECTS.WRONG_PASSWORD(email), loginErrorMessageWrongCredentialsFrontendFacing);
     }
 
-    if (!existingUser.isVerified) {
-      return handleLoginError(ERROR_OBJECTS.WRONG_PASSWORD(email), loginErrorMessageWrongCredentialsFrontendFacing);
+    // If isVerified exists and is false then we have an issue
+    // because if it does not exist it means it is either an old account
+    // or that we used the skip email confirmation functionality
+    if (existingUser?.isVerified === false) {
+      return handleLoginError(ERROR_OBJECTS.USER_NOT_VERIFIED(email));
     }
 
     // Only reset the clearing index if the time to maintain the cookies in the db is different than the current TTL of the index
