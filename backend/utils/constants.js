@@ -125,7 +125,7 @@ export const ERROR_OBJECTS = {
     USER_NOT_VERIFIED: (email) => {
       return {
         statusCode: 401,
-        message: loginErrorMessageWrongPassword(email)
+        message: loginErrorMessageUserNotVerified(email)
       };
     },
     FRONTEND_INTERNAL_SERVER_ERROR: {
