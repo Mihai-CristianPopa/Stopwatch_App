@@ -56,9 +56,53 @@ export const registerController = async (req, res, next) => {
     infoLog(req, startTime, INFO_MESSAGE.USER_REGISTERED(email));
     res.locals.newUser = { userId: newUser.insertedId.toString(), email: email, token: confirmationToken };
     return next();
-    // res.status(201).json({
-    //   message: INFO_MESSAGE.USER_REGISTERED(email)
-    // });
+  } catch(error) {
+    logger.error(`${METHOD_FAILURE_MESSAGE} for ${email}`, errorObj(req, startTime, error));
+    res.status(500).json(ERROR_OBJECTS.FRONTEND_INTERNAL_SERVER_ERROR);
+  }
+
+};
+
+export const registerControllerWithoutEmailConfirmation = async (req, res) => {
+  const startTime = Date.now();
+  const { email, password } = req.body;
+  let err;
+
+  if (!email) {
+    err = ERROR_OBJECTS.BAD_REQUEST("email");
+    logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
+    return res.status(err.statusCode).json(err);
+  }
+
+  if (!password) {
+    err = ERROR_OBJECTS.BAD_REQUEST("password");
+    logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
+    return res.status(err.statusCode).json(err);
+  }
+
+  try {
+    if (await getUserByEmail(email)){
+      err = ERROR_OBJECTS.USER_ALREADY_EXISTS(email);
+      logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, err));
+      return res.status(err.statusCode).json(err);
+    };
+
+    const saltRounds = 12;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    const newUser = await registerUser({
+      email_address: email,
+      password: hashedPassword,
+      created_at: new Date(),
+      date: new Date().toISOString().split('T')[0]
+    });
+
+    infoLog(req, startTime, INFO_MESSAGE.USER_REGISTERED(email));
+    res.status(201).json({
+      message: INFO_MESSAGE.USER_REGISTERED(email),
+      skipped: true
+    });
+
   } catch(error) {
     logger.error(`${METHOD_FAILURE_MESSAGE} for ${email}`, errorObj(req, startTime, error));
     res.status(500).json(ERROR_OBJECTS.FRONTEND_INTERNAL_SERVER_ERROR);
