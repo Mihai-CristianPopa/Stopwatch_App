@@ -46,7 +46,7 @@ class AuthUI {
   }
 
   _showEmailConfirmation() {
-      this.loginForm.hidden = true;
+    this.loginForm.hidden = true;
     this.registerForm.hidden = true;
     this.confirmationEmailScreen.hidden = false;
     this._clearError();
@@ -109,9 +109,12 @@ class AuthUI {
     if (result.ok) {
       // Here I need to show the user that he received an email and he needs to confirm it to proceed
       // And not yet set up the login
-      this._showEmailConfirmation();
-      // document.getElementById('login-email').value = email;
-      // this._showLogin();
+      if (result.skipped === true) {
+        document.getElementById('login-email').value = email;
+        this._showLogin();
+      } else {
+        this._showEmailConfirmation();
+      }
     } else {
       this._showError(result.message);
     }

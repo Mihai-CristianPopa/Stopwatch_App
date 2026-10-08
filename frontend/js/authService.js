@@ -82,7 +82,7 @@ class AuthService {
 
       const data = await response.json();
       if (response.ok) {
-        return { ok: true, message: data.message };
+        return { ok: true, message: data.message, skipped: data?.skipped };
       }
       return { ok: false, message: data.message || 'Registration failed.' };
     } catch (error) {
