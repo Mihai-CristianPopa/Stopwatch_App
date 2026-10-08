@@ -1,5 +1,5 @@
 import express from "express";
-import { registerController } from "../controllers/registerController.js";
+import { registerController, registerControllerWithoutEmailConfirmation } from "../controllers/registerController.js";
 import { loginController } from "../controllers/loginController.js";
 import { logoutController } from "../controllers/logoutController.js";
 import { sendEmailConfirmationController } from "../controllers/sendEmailController.js";
@@ -8,6 +8,7 @@ import { checkDatabaseForAuth } from "../middleware/dbIsUpMiddleware.js";
 import { updateLoginSession } from "../services/sessionService.js";
 import { deleteUserController } from "../controllers/deleteUserController.js";
 import { emailConfirmationController } from "../controllers/emailConfirmationController.js";
+import { config } from "../configs/config.js";
 
 const router = express.Router();
 
@@ -17,7 +18,12 @@ router.post("/logout", logoutController);
 
 router.post("/login", loginController);
 
-router.post("/register", registerController, sendEmailConfirmationController);
+if (config.skipEmailConfirmation === true) {
+  router.post("/register", registerControllerWithoutEmailConfirmation);
+} else {
+  router.post("/register", registerController, sendEmailConfirmationController);
+}
+
 
 router.delete("/delete-user", deleteUserController);
 
