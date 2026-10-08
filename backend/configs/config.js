@@ -8,5 +8,5 @@ export const config = {
   isProduction: (process.env?.IS_PRODUCTION === 'true') || false,
   emailSendingDomain: process.env.EMAIL_SENDING_DOMAIN,
   emailService: process.env.EMAIL_SERVICE,
-  skipEmailConfirmation: (process.env?.SKIP_EMAIL_CONFIRMATION === 'true') || true
+  skipEmailConfirmation: (process.env?.SKIP_EMAIL_CONFIRMATION === 'true')
 };
