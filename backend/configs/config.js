@@ -6,6 +6,8 @@ export const config = {
   port: process.env.PORT || 7000,
   frontendOrigin: process.env.FRONTEND_ORIGIN || "http://localhost:5173",
   isProduction: process.env?.IS_PRODUCTION === 'true',
+  smtpUser: process.env.SMTP_USER,
+  smtpPass: process.env.SMTP_PASS,
   emailSendingDomain: process.env.EMAIL_SENDING_DOMAIN,
   emailService: process.env.EMAIL_SERVICE,
   skipEmailConfirmation: (process.env?.SKIP_EMAIL_CONFIRMATION === 'true')

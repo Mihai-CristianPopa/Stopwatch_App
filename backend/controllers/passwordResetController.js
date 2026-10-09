@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import logger from "../logger.js";
-import {errorObj} from "../loggerHelper.js";
+import {errorObj, infoLog} from "../loggerHelper.js";
 import { ERROR_OBJECTS, INFO_MESSAGE } from "../utils/constants.js";
 import { updateUserPassword, getUserByEmail } from "../services/userService.js";
 import { invalidatePasswordResetEntryByEmail, getPasswordResetEntryByToken, getPasswordResetEntryById, createPasswordResetEntry, successfulPasswordResetEntry, invalidatePasswordResetEntry, getNotExpiredPasswordResetEntryByEmail } from "../services/passwordResetService.js";
@@ -76,6 +76,7 @@ export const createPasswordResetEmailController = async (req, res, next) => {
     // otherwise log the entry creation (skipped)
     // and pass the data to the email sending process
     res.locals.passwordResetEntry = { email: email, token: o.token };
+    infoLog(req, startTime, "Passing the request over to the sendEmailController");
     next()
   } catch (error) {
     logger.error(`${METHOD_FAILURE_MESSAGE} for ${email}`, errorObj(req, startTime, error));

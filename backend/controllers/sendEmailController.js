@@ -17,13 +17,13 @@ export const sendEmailConfirmationController = async (req, res) => {
     const startTime = Date.now();
     try {
         const confirmationUrl = `${baseUrl}/authentication/email-confirmation?userId=${res.locals.newUser.userId}&token=${res.locals.newUser.token}`;  
-
+        infoLog(req, startTime, "Redirect url: " + confirmationUrl + " just requested the email sending");
         const info = await sendEmail({
             from: SENDER_ADDRESS,
             to: res.locals.newUser.email, // list of recipients
             subject: "Confirm your Stopwatch Tracker account", // subject line
             html: emailConfirmationHtml(confirmationUrl), // HTML body
-        });
+        }, startTime);
         if (info.rejected.length > 0) {
             logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, {
                 statusCode: 500,
@@ -48,13 +48,14 @@ export const sendPasswordResetController = async (req, res) => {
     const LOCAL_FRONTEND_BASE_URL = "http://localhost:5500/frontend/index.html";
     try {
         const redirectUrl = (config.isProduction ? PROD_FRONTEND_BASE_URL : LOCAL_FRONTEND_BASE_URL) + `?reset-password-email=${res.locals.passwordResetEntry.email}&token=${res.locals.passwordResetEntry.token}`;
+        infoLog(req, startTime, "Redirect url: " + redirectUrl + " just requested the email sending");
 
         const info = await sendEmail({
             from: SENDER_ADDRESS,
             to: res.locals.passwordResetEntry.email, // list of recipients
             subject: "Reset your Stopwatch Tracker password", // subject line
             html: passwordResetHtml(redirectUrl), // HTML body
-        });
+        }, startTime);
         if (info.rejected.length > 0) {
             logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, {
                 statusCode: 500,

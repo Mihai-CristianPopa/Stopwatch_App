@@ -45,6 +45,15 @@ export const infoLog = (req, startTime, message = "") => {
     logger.info(log);
 }
 
+export const infoLogMessage = (startTime, message) => {
+    const log = {};
+    if (startTime) {
+        log.responseTime = `${Date.now() - startTime} ms`;
+    }
+    log.message = message
+    logger.info(log);
+}
+
 export const errorObj = (req, startTime, error) => {
     const log = defaultLog(req, startTime);
     log.statusCode = error?.statusCode || 500;
