@@ -2,12 +2,13 @@ import express from "express";
 import { registerController, registerControllerWithoutEmailConfirmation } from "../controllers/registerController.js";
 import { loginController } from "../controllers/loginController.js";
 import { logoutController } from "../controllers/logoutController.js";
-import { sendEmailConfirmationController } from "../controllers/sendEmailController.js";
+import { sendEmailConfirmationController, sendPasswordResetController } from "../controllers/sendEmailController.js";
 import { requireAuthentication } from "../middleware/authMiddleware.js";
 import { checkDatabaseForAuth } from "../middleware/dbIsUpMiddleware.js";
 import { updateLoginSession } from "../services/sessionService.js";
 import { deleteUserController } from "../controllers/deleteUserController.js";
 import { emailConfirmationController } from "../controllers/emailConfirmationController.js";
+import { passwordResetConfirmationController, createPasswordResetEmailController } from "../controllers/passwordResetController.js";
 import { config } from "../configs/config.js";
 
 const router = express.Router();
@@ -24,6 +25,9 @@ if (config.skipEmailConfirmation === true) {
   router.post("/register", registerController, sendEmailConfirmationController);
 }
 
+router.post("/create-password-reset", createPasswordResetEmailController, sendPasswordResetController);
+
+router.post("/confirm-password-reset", passwordResetConfirmationController);
 
 router.delete("/delete-user", deleteUserController);
 
