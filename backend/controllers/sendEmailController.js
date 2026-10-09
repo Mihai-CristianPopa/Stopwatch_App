@@ -18,22 +18,23 @@ export const sendEmailConfirmationController = async (req, res) => {
     try {
         const confirmationUrl = `${baseUrl}/authentication/email-confirmation?userId=${res.locals.newUser.userId}&token=${res.locals.newUser.token}`;  
         infoLog(req, startTime, "Redirect url: " + confirmationUrl + " just requested the email sending");
-        const info = await sendEmail({
+        // const info = await sendEmail({
+        sendEmail({
             from: SENDER_ADDRESS,
             to: res.locals.newUser.email, // list of recipients
             subject: "Confirm your Stopwatch Tracker account", // subject line
             html: emailConfirmationHtml(confirmationUrl), // HTML body
         }, startTime);
-        if (info.rejected.length > 0) {
-            logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, {
-                statusCode: 500,
-                message: "Something went wrong for: " + info.rejected
-            }));
-            return res.status(500).json(ERROR_OBJECTS.FRONTEND_INTERNAL_SERVER_ERROR);
-        }
-        infoLog(req, startTime, INFO_MESSAGE.PASSWORD_RESET_CONFIRMATION(res.locals.newUser.email));
+        // if (info.rejected.length > 0) {
+        //     logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, {
+        //         statusCode: 500,
+        //         message: "Something went wrong for: " + info.rejected
+        //     }));
+        //     return res.status(500).json(ERROR_OBJECTS.FRONTEND_INTERNAL_SERVER_ERROR);
+        // }
+        infoLog(req, startTime, INFO_MESSAGE.USER_REGISTERED(res.locals.newUser.email));
         res.status(201).json({
-            message: INFO_MESSAGE.PASSWORD_RESET_CONFIRMATION(res.locals.newUser.email)
+            message: INFO_MESSAGE.USER_REGISTERED(res.locals.newUser.email)
         });
     } catch (error) {
         logger.error(`${METHOD_FAILURE_MESSAGE} for ${res.locals.newUser.email}`, errorObj(req, startTime, error));
@@ -50,21 +51,22 @@ export const sendPasswordResetController = async (req, res) => {
         const redirectUrl = (config.isProduction ? PROD_FRONTEND_BASE_URL : LOCAL_FRONTEND_BASE_URL) + `?reset-password-email=${res.locals.passwordResetEntry.email}&token=${res.locals.passwordResetEntry.token}`;
         infoLog(req, startTime, "Redirect url: " + redirectUrl + " just requested the email sending");
 
-        const info = await sendEmail({
+        // const info = await sendEmail({
+        sendEmail({
             from: SENDER_ADDRESS,
             to: res.locals.passwordResetEntry.email, // list of recipients
             subject: "Reset your Stopwatch Tracker password", // subject line
             html: passwordResetHtml(redirectUrl), // HTML body
         }, startTime);
-        if (info.rejected.length > 0) {
-            logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, {
-                statusCode: 500,
-                message: "Something went wrong for: " + info.rejected
-            }));
-        }
-        infoLog(req, startTime, INFO_MESSAGE.USER_RECEIVED_PASSWORD_RESET_EMAIL(res.locals.passwordResetEntry.email));
+        // if (info.rejected.length > 0) {
+        //     logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, {
+        //         statusCode: 500,
+        //         message: "Something went wrong for: " + info.rejected
+        //     }));
+        // }
+        infoLog(req, startTime, INFO_MESSAGE.PASSWORD_RESET_CONFIRMATION(res.locals.passwordResetEntry.email));
         res.status(200).json({
-            message: `If account exists an email has been sent to ${res.locals.passwordResetEntry.email}.`
+            message: INFO_MESSAGE.PASSWORD_RESET_CONFIRMATION(res.locals.passwordResetEntry.email)
         });
     } catch (error) {
         logger.error(`${METHOD_FAILURE_MESSAGE} for ${res.locals.passwordResetEntry.email}`, errorObj(req, startTime, error));
