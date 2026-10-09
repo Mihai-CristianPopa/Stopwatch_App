@@ -4,6 +4,10 @@ export const userActivationFailed = (email) => `User activation failed for email
 
 export const emailConfirmationErrorMessageUserDoesNotExist = (userId) => `Email confirmation failed because the user with id ${userId} does not exist.`;
 
+export const userMismatch = (userId1, userId2) => `Password reset entry created for ${userId1}, but activation created for ${userId2}`;
+
+export const passwordResetAlreadyExistsForEmail = (email) => `Password reset already exists for ${email}, please verify your inbox and spam also.`;
+
 export const emailConfirmationErrorMessageUserAlreadyVerified = (userId) => `Email confirmation failed because the user with id ${userId} is already verified.`;
 
 export const loginErrorMessageNoUserFoundForTheEmail = (email) => `Login failed because there is no user with the email address ${email}`;
@@ -11,6 +15,8 @@ export const loginErrorMessageNoUserFoundForTheEmail = (email) => `Login failed 
 export const loginErrorMessageWrongPassword = (email) => `Login failed due to the fact that the introduced password is wrong for the user with email address ${email}`;
 
 export const loginErrorMessageUserNotVerified = (email) => `Login failed due to the fact that the user with email address ${email} did not confirm his account.`;
+
+export const noPasswordResetTriggered = (email) => `No password reset triggered for ${email}.`;
 
 export const loginErrorMessageWrongCredentialsFrontendFacing = "Login failed due to invalid email or password";
 
@@ -21,10 +27,12 @@ const STANDARD_UNAUTH_COOKIE_OBJ = {
 
 export const INFO_MESSAGE = {
   USER_REGISTERED: (email) => `User ${email} registered and successfully received an email confirmation.`,
+  USER_RECEIVED_PASSWORD_RESET_EMAIL: (email) => `User ${email} successfully received a password reset email.`,
   USER_ACTIVATED: (email) => `User ${email} registered and successfully activated his account.`,
   LOGIN_SESSION_CREATED: (sessionId, email) => `Login session with id ${sessionId} has been created for user with email address ${email}`,
   USER_LOGGED_IN: (email) => `User with email ${email} has been logged in.`,
   USER_LOGGED_OUT: "User was logged out successfully.",
+  PASSWORD_RESET_CONFIRMATION: (email) => `If account exists an email has been sent to ${email}.`,
 }
 
 export const ERROR_OBJECTS = {
@@ -72,6 +80,12 @@ export const ERROR_OBJECTS = {
         message: registrationErrorMessageUserWithEmailExists(email)
       };
     },
+    PASSWORD_RESET_ALREADY_EXISTS: (email) => {
+      return {
+        statusCode: 400,
+        message: passwordResetAlreadyExistsForEmail(email)
+      };
+    },
     USER_ACTIVATION_FAILED: (email) => {
       return {
         statusCode: 400,
@@ -88,6 +102,12 @@ export const ERROR_OBJECTS = {
       return {
         statusCode: 400,
         message: emailConfirmationErrorMessageUserDoesNotExist(userId)
+      };
+    },
+    USER_DOES_NOT_MATCH: (userId1, userId2) => {
+      return {
+        statusCode: 400,
+        message: userMismatch(userId1, userId2)
       };
     },
     NO_COOKIE_FOUND: () => {
@@ -128,9 +148,27 @@ export const ERROR_OBJECTS = {
         message: loginErrorMessageUserNotVerified(email)
       };
     },
+    NO_PASSWORD_RESET_FOR_USER: (email) => {
+      return {
+        statusCode: 401,
+        message: noPasswordResetTriggered(email)
+      };
+    },
     FRONTEND_INTERNAL_SERVER_ERROR: {
       statusCode: 500,
       message: "Internal server error. Please try again later.",
+    },
+    PASSWORD_RESET_CREATION_FAILED: (email) => {
+      return {
+        statusCode: 500,
+        message: `Password reset entry creation failed for user ${email}. Please check the database connectivity and try again later.`
+      }; 
+    },
+    PASSWORD_RESET_FAILED: (email) => {
+      return {
+        statusCode: 500,
+        message: `Password reset failed for user ${email}. Please check the database connectivity and try again later.`
+      }; 
     },
     INVALID_BOOK: (details) => ({
       statusCode: 400,
