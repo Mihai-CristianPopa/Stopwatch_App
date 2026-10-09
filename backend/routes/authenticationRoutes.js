@@ -29,7 +29,7 @@ router.post("/create-password-reset", createPasswordResetEmailController, sendPa
 
 router.post("/confirm-password-reset", passwordResetConfirmationController);
 
-router.delete("/delete-user", deleteUserController);
+// router.delete("/delete-user", deleteUserController);
 
 router.get("/email-confirmation", emailConfirmationController);
 
