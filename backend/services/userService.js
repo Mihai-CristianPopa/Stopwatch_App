@@ -19,6 +19,12 @@ export function getUserById(userId) {
   return collection.findOne({ _id: new ObjectId(userId) });
 }
 
+export function updateUserPassword(userId, hashedPassword) {
+  const db = client.db("stopwatch_auth");
+  const collection = db.collection("users");
+  return collection.updateOne({ _id: new ObjectId(userId) }, { $set: { password: hashedPassword }});
+}
+
 export function activateUser(userId) {
   const db = client.db("stopwatch_auth");
   const collection = db.collection("users");
