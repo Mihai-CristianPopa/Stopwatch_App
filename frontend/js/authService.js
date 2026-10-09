@@ -91,6 +91,47 @@ class AuthService {
     }
   }
 
+  /** Expecting body.token, body.email, body.password. */
+  async resetPassword(body) {
+    try {
+      const response = await fetch(`${this._backendOrigin}/authentication/confirm-password-reset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(body)
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        return { ok: true, message: data.message };
+      }
+      return { ok: false, message: data.message || 'Reset password failed.' };
+    } catch (error) {
+      console.error('Reset password error:', error);
+      return { ok: false, message: 'Something went wrong. Please try again later.' };
+    }
+  }
+
+  async requestPasswordReset(email) {
+    try {
+      const response = await fetch(`${this._backendOrigin}/authentication/create-password-reset?`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({email})
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        return { ok: true, message: data.message };
+      }
+      return { ok: false, message: data.message };
+    } catch (error) {
+      console.error('Request password reset error:', error);
+      return { ok: false, message: 'Something went wrong. Please try again later.' };
+    }
+  }
+
   async logout() {
     try {
       await fetch(`${this._backendOrigin}/authentication/logout`, {
