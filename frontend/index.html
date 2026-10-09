@@ -44,6 +44,7 @@
         </label>
         <button type="submit">Log in</button>
         <p class="form-switch">No account? <button type="button" id="show-register" class="link-btn">Register</button></p>
+        <p class="form-switch">Forgot password? <button type="button" id="show-request-password-reset-form" class="link-btn">Reset Password</button></p>
       </form>
 
       <!-- Register form -->
@@ -62,7 +63,31 @@
         <p class="form-switch">Already have an account? <button type="button" id="show-login" class="link-btn">Log in</button></p>
       </form>
 
+      <!-- Request password reset form (Step 1 request email)  -->
+      <form id="request-password-reset-form" hidden>
+        <h2>Request Password Reset</h2>
+        <label>Email
+          <input type="email" id="password-reset-input-email" required autocomplete="email" />
+        </label>
+        <button type="submit">Send Password Reset Email</button>
+        <p class="form-switch">Already have an account? <button type="button" id="reset-pass-show-login" class="link-btn">Log in</button></p>
+      </form>
+
+      <!-- Reset password form (Step 2 after email confirmation) -->
+      <form id="reset-password-form" hidden>
+        <h2>Reset Password</h2>
+        <label>Password
+          <input type="password" id="reset-password" required autocomplete="new-password" />
+        </label>
+        <label>Confirm password
+          <input type="password" id="reset-confirm" required autocomplete="new-password" />
+        </label>
+        <button type="submit">Reset Password</button>
+      </form>
+
       <p id="email-confirmation-screen" hidden>Your registration was successful, an email has been sent to your account. The confirmation link is available for the next hour. The received email will have this subject 'Confirm your Stopwatch Tracker account'. Please check your spam folder too.</p>
+      
+      <p id="reset-password-screen" hidden>An email has been sent to your account for password reset. The password reset link is available for the next hour. The received email will have this subject 'Reset your Stopwatch Tracker password'. Please check your spam folder too.</p>
 
       <p id="auth-error" class="error-msg" hidden></p>
     </div>
