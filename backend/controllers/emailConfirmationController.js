@@ -79,7 +79,7 @@ export const emailConfirmationController = async (req, res) => {
     };
 
     infoLog(req, startTime, INFO_MESSAGE.USER_ACTIVATED(user.email_address));
-    const PROD_FRONTEND_BASE_URL = "mihai-cristianpopa.github.io/Frontend_Stopwatch_App/";
+    const PROD_FRONTEND_BASE_URL = "https://mihai-cristianpopa.github.io/Frontend_Stopwatch_App/";
     const LOCAL_FRONTEND_BASE_URL = "http://localhost:5500/frontend/index.html";
     const redirectUrl = (config.isProduction ? PROD_FRONTEND_BASE_URL : LOCAL_FRONTEND_BASE_URL) + `?email=${user.email_address}` ;
     return res.redirect(redirectUrl);
