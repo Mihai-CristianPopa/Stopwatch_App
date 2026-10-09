@@ -36,7 +36,7 @@ export const sendEmailConfirmationController = async (req, res) => {
             message: INFO_MESSAGE.PASSWORD_RESET_CONFIRMATION(res.locals.newUser.email)
         });
     } catch (error) {
-        logger.error(`${METHOD_FAILURE_MESSAGE} for ${email}`, errorObj(req, startTime, error));
+        logger.error(`${METHOD_FAILURE_MESSAGE} for ${res.locals.newUser.email}`, errorObj(req, startTime, error));
         res.status(500).json(ERROR_OBJECTS.FRONTEND_INTERNAL_SERVER_ERROR);
     }
 }
@@ -66,7 +66,7 @@ export const sendPasswordResetController = async (req, res) => {
             message: `If account exists an email has been sent to ${res.locals.passwordResetEntry.email}.`
         });
     } catch (error) {
-        logger.error(`${METHOD_FAILURE_MESSAGE} for ${email}`, errorObj(req, startTime, error));
+        logger.error(`${METHOD_FAILURE_MESSAGE} for ${res.locals.passwordResetEntry.email}`, errorObj(req, startTime, error));
         res.status(500).json(ERROR_OBJECTS.FRONTEND_INTERNAL_SERVER_ERROR);
     }
 }
