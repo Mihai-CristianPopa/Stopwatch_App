@@ -8,6 +8,8 @@ import { setActiveTabBtn } from "./common.js";
 
 const params = new URLSearchParams(window.location.search);
 const verifiedEmail = params.get('email');
+const passwordResetToken = params.get('token');
+const passwordResetEmail = params.get('reset-password-email');
 
 const views = {
   loading: document.getElementById('loading-view'),
@@ -49,6 +51,13 @@ function showAuth(optionalVerifiedEmail) {
   showView('auth');
 }
 
+function showResetPassword() {
+  document.getElementById('login-form').hidden = true;
+  document.getElementById('app-header').hidden = true;
+  document.getElementById('reset-password-form').hidden = false;
+  showView('auth');
+}
+
 // Nav buttons
 document.getElementById('nav-stopwatch').addEventListener('click', () => showView('stopwatch'));
 document.getElementById('nav-history').addEventListener('click', () => {
@@ -86,6 +95,8 @@ new AuthUI({
   if (authenticated) {
     showApp(authService.user);
     onUserReady();
+  } else if (passwordResetToken && passwordResetEmail) {
+    showResetPassword();
   } else {
     showAuth(verifiedEmail);
   }
