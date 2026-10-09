@@ -19,3 +19,13 @@ content-type: application/json
 ### 3. Use session for checking whether the user is logged in or not
 GET http://localhost:7000/authentication/email-confirmation?userId={{userId}}&token={{token}} HTTP/1.1
 content-type: application/json
+
+###
+
+POST http://localhost:7000/authentication/create-password-reset HTTP/1.1
+content-type: application/json
+
+{
+    "email": "michaelscott@proton.me"
+}
+###
