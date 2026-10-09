@@ -16,10 +16,7 @@ const createEmailTransporter = () => {
 export const sendEmail = async (emailObject, startTime) => {
     infoLogMessage(startTime, "Calling createEmailTransporter method");
     const transporter = createEmailTransporter();
-    infoLogMessage(startTime, String(transporter) + `Calling transporter.sendMail, transporter._eventsCount: ${transporter._eventsCount}`);
-    if (!true) {
-        const info = await transporter.sendMail(emailObject);
-        return info;
-    }
-    return;
+    infoLogMessage(startTime, `Calling transporter.sendMail, transporter._eventsCount: ${transporter._eventsCount}`);
+    const info = await transporter.sendMail(emailObject);
+    return info;
 }
