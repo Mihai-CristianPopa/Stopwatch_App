@@ -51,19 +51,15 @@ export const sendPasswordResetController = async (req, res) => {
         const redirectUrl = (config.isProduction ? PROD_FRONTEND_BASE_URL : LOCAL_FRONTEND_BASE_URL) + `?reset-password-email=${res.locals.passwordResetEntry.email}&token=${res.locals.passwordResetEntry.token}`;
         infoLog(req, startTime, "Redirect url: " + redirectUrl + " just requested the email sending");
 
-        // const info = await sendEmail({
         sendEmail({
-            from: SENDER_ADDRESS,
             to: res.locals.passwordResetEntry.email, // list of recipients
-            subject: "Reset your Stopwatch Tracker password", // subject line
-            html: passwordResetHtml(redirectUrl), // HTML body
+            template: {
+                id: "stopwatch-tracker-password-reset",
+                variables: {
+                    URL: redirectUrl,
+                },
+            }
         }, startTime);
-        // if (info.rejected.length > 0) {
-        //     logger.error(METHOD_FAILURE_MESSAGE, errorObj(req, startTime, {
-        //         statusCode: 500,
-        //         message: "Something went wrong for: " + info.rejected
-        //     }));
-        // }
         infoLog(req, startTime, INFO_MESSAGE.PASSWORD_RESET_CONFIRMATION(res.locals.passwordResetEntry.email));
         res.status(200).json({
             message: INFO_MESSAGE.PASSWORD_RESET_CONFIRMATION(res.locals.passwordResetEntry.email)
