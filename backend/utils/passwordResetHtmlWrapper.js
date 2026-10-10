@@ -240,6 +240,26 @@ export const passwordResetHtml = (url) => `
                                         </td>
                                     </tr>
 
+                                     <tr>
+                                        <td align="center" style="font-size:0px;padding:10px 25px;padding-bottom:0;word-break:break-word;">
+
+                                            <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:16px;line-height:22px;text-align:center;color:#555;">
+                                                Or reset your password using this link:
+                                            </div>
+
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td align="center" style="font-size:0px;padding:10px 25px;padding-bottom:40px;word-break:break-word;">
+
+                                            <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:16px;line-height:22px;text-align:center;color:#555;">
+                                                <a href=${url} style="color:#2F67F6">${url}</a>
+                                            </div>
+
+                                        </td>
+                                    </tr>
+
                                     <tr>
                                         <td align="center" style="font-size:0px;padding:10px 25px;padding-bottom:40px;word-break:break-word;">
 
