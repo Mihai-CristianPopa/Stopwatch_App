@@ -43,6 +43,13 @@ export const ERROR_OBJECTS = {
           details: `Missing field: ${missingField}`
         }
     },
+    MISSING_CONFIG: (missingField) =>  {
+        return {
+          statusCode: 500,
+          message: "Missing required configuration. Ensure that all necessary configurations are included in the environment variables.",
+          details: `Missing config for: ${missingField}`
+        }
+    },
     INVALID_INTERVAL: (details) => {
       return {
         statusCode: 400,

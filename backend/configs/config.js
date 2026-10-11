@@ -10,5 +10,9 @@ export const config = {
   smtpPass: process.env.SMTP_PASS,
   emailSendingDomain: process.env.EMAIL_SENDING_DOMAIN,
   emailService: process.env.EMAIL_SERVICE,
-  skipEmailConfirmation: (process.env?.SKIP_EMAIL_CONFIRMATION === 'true')
+  skipEmailConfirmation: (process.env?.SKIP_EMAIL_CONFIRMATION === 'true'),
+  templateId: {
+    emailConfirmation: process.env.EMAIL_CONFIRMATION_TEMPLATE_ID,
+    passwordReset: process.env.RESET_PASSWORD_TEMPLATE_ID
+  }
 };
